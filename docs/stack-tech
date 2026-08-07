@@ -2,14 +2,14 @@
 --
 ## Back-End
 - Python 3.14.7
-- Django
+- Django 5.2.
 ## Front-End
 - HTML5
 - CSS3
 - BOOTSTRAP5
 - JavaScript
 ## Data Base
-- MySQL
+- MySQL 8.0.46
 ## Versionamento
 - Git
 - GitHub
