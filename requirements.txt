@@ -9,10 +9,12 @@ django-otp==1.7.0
 filelock==3.32.4
 mysqlclient==2.2.8
 packaging==26.3
+pillow==12.3.0
 pipx==1.16.7
 platformdirs==4.11.3
 pycparser==3.0
 python-dotenv==1.2.2
+qrcode==8.2
 sqlparse==0.5.5
 typing_extensions==4.16.0
 userpath==1.9.2

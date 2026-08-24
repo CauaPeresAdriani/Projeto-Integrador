@@ -5,9 +5,7 @@
     <title>Home</title>
 </head>
 <body>
-        <h1> Refractor: Arquitetura MVT </h1>
-        <p>Template criado</p>
-
-
+    <p>Bem-vindo, {{ request.user.username }}!</p>
+    <a href="{% url 'logout' %}">Sair do Sistema</a>
 </body>
 </html>

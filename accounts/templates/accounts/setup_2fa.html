@@ -1,11 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Configurar 2FA - EduTrust</title>
 </head>
 <body>
-    
+    <h2>Configuração de Autenticação de Dois Fatores (2FA)</h2>
+    <p>Escaneie o QR Code abaixo com seu aplicativo autenticador (Google Authenticator, Authy, etc.):</p>
+
+    {% if imagem_qr_code %}
+        <div>
+            <img src="data:image/png;base64,{{ imagem_qr_code }}" alt="QR Code 2FA">
+        </div>
+    {% endif %}
+
+    {% if erro %}
+        <p style="color: red;">{{ erro }}</p>
+    {% endif %}
+
+    <form method="POST">
+        {% csrf_token %}
+        <label for="token">Digite o código de 6 dígitos gerado no app:</label>
+        <input type="text" name="token" id="token" required autocomplete="off">
+        <button type="submit">Verificar e Ativar</button>
+    </form>
 </body>
 </html>
