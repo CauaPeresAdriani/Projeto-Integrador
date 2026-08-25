@@ -59,7 +59,7 @@ MIDDLEWARE = [
     'django_otp.middleware.OTPMiddleware',
 ]
 
-ROOT_URLCONF = 'edutrust.urls'
+ROOT_URLCONF = 'clinsecure.urls'
 
 TEMPLATES = [
     {
@@ -76,7 +76,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'edutrust.wsgi.application'
+WSGI_APPLICATION = 'clinsecure.wsgi.application'
 
 
 # Database
@@ -115,7 +115,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 PASSWORD_HASHERS = [
-    "edutrust.hashers.CustoHash",
+    "clinsecure.hashers.CustoHash",
     "django.contrib.auth.hashers.Argon2PasswordHasher",
     "django.contrib.auth.hashers.PBKDF2PasswordHasher",
     "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
