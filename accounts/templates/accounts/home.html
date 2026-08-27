@@ -6,6 +6,11 @@
 </head>
 <body>
     <p>Bem-vindo, {{ request.user.username }}!</p>
-    <a href="{% url 'logout' %}">Sair do Sistema</a>
+   <form action="{% url 'logout' %}" method="POST" style="display: inline;">
+    {% csrf_token %}
+    <button type="submit" style="background: none; border: none; color: inherit; text-decoration: underline; cursor: pointer; padding: 0;">
+        Sair do Sistema
+    </button>
+</form>
 </body>
 </html>

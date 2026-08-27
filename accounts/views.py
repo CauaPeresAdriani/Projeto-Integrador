@@ -55,9 +55,11 @@ def cadastro_view(request):
 ## verificando se o nome de usuario e valido       
         if not re.match(r'^[a-zA-Z0-9_]+$', username):
             erro = "O nome de usuário não pode ser um e-mail. Use apenas letras, números e underline (_), sem espaços."
+            return render(request, 'accounts/cadastro.html', {'erro': erro})
 ## verificando se o username e valido
         elif Usuario.objects.filter(username=username).exists(): 
            erro = "Esse nome de usuário já está em uso. Escolha outro."
+           return render(request, 'accounts/cadastro.html', {'erro': erro})
 ## verificando se o cpf e valido
         elif Usuario.objects.filter(cpf=cpf).exists():
             erro = "Este CPF já está cadastrado no sistema."
