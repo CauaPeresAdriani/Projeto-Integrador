@@ -28,11 +28,12 @@ class Usuario(AbstractUser):
     tentativas_2fa = models.PositiveIntegerField(default=0)
     
     bloqueado_2fa_ate = models.DateTimeField(null=True, blank=True)
-
-
-def __str__(self):
+    def __str__(self):
         return self.username
 # Create your models here.
+
+
+
 
 
 class Aluno(models.Model):
