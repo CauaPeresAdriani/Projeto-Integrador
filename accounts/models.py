@@ -1,5 +1,4 @@
 from django.db import models
-
 # Create your models here.
 from django.db import models
 from django.contrib.auth.models import AbstractUser
@@ -19,11 +18,22 @@ class Usuario(AbstractUser):
     
     dois_fatores_ativado = models.BooleanField(default=False)
     secret_key = models.CharField(max_length=32, blank=True, null=True)
-    
 
+    tentativas_login = models.PositiveIntegerField(default=0)
+
+    bloqueado_ate = models.DateTimeField(null=True, blank=True)
+
+    ultimo_login_falhou = models.DateTimeField(null=True, blank=True)
+
+    tentativas_2fa = models.PositiveIntegerField(default=0)
+    
+    bloqueado_2fa_ate = models.DateTimeField(null=True, blank=True)
     def __str__(self):
         return self.username
 # Create your models here.
+
+
+
 
 
 class Aluno(models.Model):

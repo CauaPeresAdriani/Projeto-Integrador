@@ -133,6 +133,21 @@ PASSWORD_HASHERS = [
 
 AUTH_USER_MODEL = 'accounts.Usuario'
 
+# Tempo máximo da sessão: 15 minutos.
+SESSION_COOKIE_AGE = 900
+
+# Atualiza o tempo da sessão a cada requisição.
+SESSION_SAVE_EVERY_REQUEST = True
+
+# Mantém a sessão válida enquanto o navegador estiver aberto.
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+# Impede JavaScript de acessar o cookie da sessão.
+SESSION_COOKIE_HTTPONLY = True
+
+# Ajuda a proteger o cookie da sessão contra ataques CSRF.
+SESSION_COOKIE_SAMESITE = 'Lax'
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
