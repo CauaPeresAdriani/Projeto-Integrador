@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h2>Tela de verificação do token 2fa</h2>
+
+    <form method="POST">
+        {% csrf_token %} 
+        
+        <div>
+            <label>Token de 6 digitos:</label><br>
+            <input type="text" name="token" required>
+        </div>
+
+        <button type="submit">Verificar Token</button>
+    </form>
+
+    
+    {% if erro %}
+        <p style="color: red; margin-top: 15px;">{{ erro }}</p>
+    {% endif %}
+</body>
+</html>

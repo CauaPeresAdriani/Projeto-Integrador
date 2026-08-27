@@ -16,6 +16,11 @@ class Usuario(AbstractUser):
 
     REQUIRED_FIELDS = ['email', 'cpf', 'perfil']
 
+    
+    dois_fatores_ativado = models.BooleanField(default=False)
+    secret_key = models.CharField(max_length=32, blank=True, null=True)
+    
+
     def __str__(self):
         return self.username
 # Create your models here.

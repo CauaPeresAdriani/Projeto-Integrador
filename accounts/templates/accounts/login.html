@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Projeto Integrador</title>
+</head>
+<body>
+    <h2>Tela de Login</h2>
+
+    <form method="POST">
+        {% csrf_token %} 
+        
+        <div>
+            <label>Usuário:</label><br>
+            <input type="text" name="username" required>
+        </div>
+        <br>
+        <div>
+            <label>Senha:</label><br>
+            <input type="password" name="password" required>
+        </div>
+        <br>
+        <button type="submit">Entrar</button>
+        <a href="{% url 'cadastro' %}">Não tem conta? Cadastre-se</a>
+    </form>
+
+    
+    {% if erro %}
+        <p style="color: red; margin-top: 15px;">{{ erro }}</p>
+    {% endif %}
+</body>
+</html>
