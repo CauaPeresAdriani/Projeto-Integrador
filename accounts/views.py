@@ -7,37 +7,133 @@ from django.http import HttpResponse
 from django.shortcuts import redirect, render
 import qrcode
 from django_otp.plugins.otp_totp.models import TOTPDevice
-from accounts.models import Usuario
+from accounts.models import Usuario, AuditLog
+from datetime import timedelta 
+from django.utils import timezone
+import time
 
 def meu_login_view(request):
-## Instanciando variavel erro como none
+    ## Instanciando variavel erro como none
     erro = None
-## usa if method post para saber se o usuario clicou no botao de login
+    ## usa if method post para saber se o usuario clicou no botao de login
     if request.method == 'POST':
-## Instanciando as variaveis de usuario e capturando os valores digitados pelo usuario no html      
+        ## Instanciando as variaveis de usuario e capturando os valores digitados pelo usuario no html      
         user_name = request.POST.get('username')
         senha = request.POST.get('password')
-        usuario = authenticate(request, username=user_name, password=senha)
-## se o usuario não é none
+         # Procura o usuário no banco
+        usuario_cadastrado = Usuario.objects.filter(
+            username=user_name
+        ).first()
+        # Verifica se o usuário está bloqueado
+        if usuario_cadastrado:
+            agora = timezone.now()
+            if (
+                usuario_cadastrado.bloqueado_ate
+                and usuario_cadastrado.bloqueado_ate > agora
+            ):
+                erro = "Conta temporariamente bloqueada. Tente novamente mais tarde."
+
+                 # Registra tentativa durante o bloqueio.
+                AuditLog.objects.create(
+                    usuario=usuario_cadastrado,
+                    evento='Tentativa durante bloqueio',
+                    ip=request.META.get('REMOTE_ADDR'),
+                    resultado='Bloqueado',
+                    detalhes='Tentativa de login realizada enquanto a conta estava bloqueada.'
+                 )
+
+                return render(
+                    request,
+                    'accounts/login.html',
+                    {'erro': erro}
+                )
+            # Libera a conta após o fim do bloqueio
+            if (
+                usuario_cadastrado.bloqueado_ate
+                and usuario_cadastrado.bloqueado_ate <= agora
+            ):
+                usuario_cadastrado.bloqueado_ate = None
+                usuario_cadastrado.tentativas_login = 0
+                usuario_cadastrado.save()
+                # Verifica usuário e senha
+        usuario = authenticate(
+            request,
+            username=user_name,
+            password=senha
+        )
+        # Login correto
         if usuario is not None:
-## armazena o id do usuario na sessao na hora do login antes de ser direcionado para 2fa            
+            # Zera as tentativas
+            usuario.tentativas_login = 0
+            usuario.bloqueado_ate = None
+            usuario.save()
+            AuditLog.objects.create(
+                usuario=usuario,
+                evento="Login bem-sucedido",
+                ip=request.META.get('REMOTE_ADDR'),
+                resultado="Sucesso",
+                detalhes="Usuário logado com sucesso."
+            )
+        # Guarda o usuário na sessão para o 2FA
             request.session['pre_otp_user_id'] = usuario.id
-## verificando se o usuario ja escaneou o qr code em app auth
-            dispositivo_confirmado = TOTPDevice.objects.filter(user=usuario, confirmed=True).first()
-## se o qr code ou seja "dispositivo_confirmado" ja tiver sido escaneado / confirmado
+            # Verifica se o 2FA já foi configurado
+            dispositivo_confirmado = TOTPDevice.objects.filter(
+                user=usuario,
+                confirmed=True
+            ).first()
+
             if dispositivo_confirmado:
-# vai direto para a tela de digitar o PIN.
+
                 return redirect('verificar_2fa')
-# primeira vez dele (ou não tem dispositivo) precisa ver o qr code.
+            
             else:
                 return redirect('setup_2fa')
-## mostrar erro caso nao tenha sido digitado usuario ou senha corretos
+        # Usuário ou senha incorretos
         else:
-            erro = "Usuário ou senha incorretos."
-## redireciona para a tela de login e mostra o erro caso tenha ocorrido algum erro
-    return render(request, 'accounts/login.html', {'erro': erro})
-
-
+            if usuario_cadastrado:
+                # Aumenta o número de tentativas
+                usuario_cadastrado.tentativas_login += 1
+                AuditLog.objects.create(
+                    usuario=usuario_cadastrado,
+                    evento='Login',
+                    ip=request.META.get('REMOTE_ADDR'),
+                    resultado='Falha',
+                    detalhes=f'Tentativa de login incorreta. Tentativa {usuario_cadastrado.tentativas_login}.'
+                )
+                # Cria um atraso conforme o número de tentativas.
+                atraso = usuario_cadastrado.tentativas_login
+                # Aplica o atraso antes de permitir uma nova tentativa.
+                time.sleep(atraso)
+                # Bloqueia após 5 tentativas
+                if usuario_cadastrado.tentativas_login >= 5:
+                    usuario_cadastrado.bloqueado_ate = (
+                        timezone.now() + timedelta(minutes=5)
+                    )
+                    usuario_cadastrado.tentativas_login = 5
+                    erro = "Muitas tentativas. Conta bloqueada por 5 minutos."
+                    # Registra o bloqueio da conta.
+                    AuditLog.objects.create(
+                        usuario=usuario_cadastrado,
+                        evento='Bloqueio de conta',
+                        ip=request.META.get('REMOTE_ADDR'),
+                        resultado='Bloqueado',
+                        detalhes='Conta bloqueada após 5 tentativas de login incorretas.'
+                    )
+                else:
+                    restantes = 5 - usuario_cadastrado.tentativas_login
+                    erro = (
+                        f"Usuário ou senha incorretos. "
+                        f"Restam {restantes} tentativa(s)."
+                    )
+                usuario_cadastrado.save()
+            else:
+                erro = "Usuário ou senha incorretos."
+    # Mostra a tela de login
+    return render(
+        request,
+        'accounts/login.html',
+        {'erro': erro}
+    )
 def cadastro_view(request):
 ## Instanciando variavel erro como none
     erro = None
@@ -128,46 +224,148 @@ def meu_setup_2fa_view(request):
 
 
 
-## logica e a mesma so muda algumas coisa
 def verificar_2fa_view(request):
 
+    # Pega o ID do usuário que está fazendo login.
     user_id = request.session.get('pre_otp_user_id')
 
+    # Se não existir usuário na sessão, volta para o login.
     if not user_id:
         return redirect('login')
-    usuario = Usuario.objects.get(id=user_id)
-    device = TOTPDevice.objects.filter(user=usuario, confirmed=True).first()
 
+    # Busca o usuário no banco.
+    usuario = Usuario.objects.get(id=user_id)
+
+    # Verifica se o 2FA está temporariamente bloqueado.
+    if (
+        usuario.bloqueado_2fa_ate
+        and usuario.bloqueado_2fa_ate > timezone.now()
+    ):
+        erro = "2FA temporariamente bloqueado. Tente novamente mais tarde."
+
+        return render(
+            request,
+            'accounts/verificar_2fa.html',
+            {'erro': erro}
+        )
+
+    # Libera o 2FA quando o bloqueio termina.
+    if (
+        usuario.bloqueado_2fa_ate
+        and usuario.bloqueado_2fa_ate <= timezone.now()
+    ):
+        usuario.bloqueado_2fa_ate = None
+        usuario.tentativas_2fa = 0
+        usuario.save()
+        # Registra o 2FA correto.
+        AuditLog.objects.create(
+            usuario=usuario,
+            evento="2FA desbloqueado",
+            ip=request.META.get('REMOTE_ADDR'),
+            resultado="Sucesso",
+            detalhes="Código 2FA validado corretament."
+        )
+    # Procura o dispositivo 2FA confirmado.
+    device = TOTPDevice.objects.filter(
+        user=usuario,
+        confirmed=True
+    ).first()
+
+    # Se não existir dispositivo, vai para configuração.
     if not device:
         return redirect('setup_2fa')
 
     erro = None
-  
+
+    # Verifica se o formulário foi enviado.
     if request.method == 'POST':
+
+        # Pega o código digitado.
         token_digitado = request.POST.get('token')
 
+        # Verifica o código 2FA.
         if device.verify_token(token_digitado):
 
+            # Login concluído.
             login(request, usuario)
+
+            # Zera as tentativas do 2FA.
+            usuario.tentativas_2fa = 0
+            usuario.bloqueado_2fa_ate = None
+            usuario.save()
+
+            # Remove o usuário temporário da sessão.
             if 'pre_otp_user_id' in request.session:
                 del request.session['pre_otp_user_id']
-                
-            return redirect('home')  
+
+            return redirect('home')
+
         else:
-            erro = "Código inválido. Tente novamente."
 
-    return render(request, 'accounts/verificar_2fa.html', {'erro': erro})
+            # Aumenta o número de tentativas.
+            usuario.tentativas_2fa += 1
+            # Registra a tentativa de 2FA incorreta.
+            AuditLog.objects.create(
+                usuario=usuario,
+                evento='2FA',
+                ip=request.META.get('REMOTE_ADDR'),
+                resultado='Falha',
+                detalhes=f'Código 2FA incorreto. Tentativa {usuario.tentativas_2fa}.'
+            )
 
+            # Cria atraso progressivo.
+            atraso = usuario.tentativas_2fa
+            time.sleep(atraso)
 
-## so pedindo o login para nao burlar a url
+            # Bloqueia após 5 tentativas.
+            if usuario.tentativas_2fa >= 5:
+
+                usuario.bloqueado_2fa_ate = (
+                    timezone.now() + timedelta(minutes=5)
+                )
+
+                usuario.tentativas_2fa = 5
+
+                erro = "Muitas tentativas. 2FA bloqueado por 5 minutos."
+
+                # Registra o bloqueio do 2FA.
+                AuditLog.objects.create(
+                usuario=usuario,
+                evento='Bloqueio 2FA',
+                ip=request.META.get('REMOTE_ADDR'),
+                resultado='Bloqueado',
+                detalhes='2FA bloqueado após 5 tentativas incorretas.'
+                )
+
+            else:
+
+                restantes = 5 - usuario.tentativas_2fa
+
+                erro = (
+                    f"Código inválido. "
+                    f"Restam {restantes} tentativa(s)."
+                )
+
+            # Salva as alterações.
+            usuario.save()
+
+    return render(
+        request,
+        'accounts/verificar_2fa.html',
+        {'erro': erro}
+    )
+
+# Exige que o usuário esteja logado para acessar a página inicial.
 @login_required
 def home_view(request):
-    if request.user.is_authenticated:
-        return render(request, 'accounts/home.html')
-
+    # Exibe a página inicial.
     return render(request, 'accounts/home.html')
 
-## logout padrao q usei vindo do import q o django ja fornece
+# Faz o logout do usuário.
 def meu_logout_view(request):
-    logout(request) 
-    return redirect('login') 
+
+    # Encerra a sessão.
+    logout(request)
+
+    # Volta para a tela de login.
+    return redirect('login')
