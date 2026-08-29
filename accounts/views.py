@@ -67,12 +67,14 @@ def meu_login_view(request):
             usuario.tentativas_login = 0
             usuario.bloqueado_ate = None
             usuario.save()
+            # O usuário acertou o usuário e a senha,
+            # mas ainda NÃO concluiu o login porque falta validar o 2FA.
             AuditLog.objects.create(
-                usuario=usuario,
-                evento="Login bem-sucedido",
-                ip=request.META.get('REMOTE_ADDR'),
-                resultado="Sucesso",
-                detalhes="Usuário logado com sucesso."
+            usuario=usuario,
+            evento="Senha validada",
+            ip=request.META.get('REMOTE_ADDR'),
+            resultado="Sucesso",
+            detalhes="Usuário e senha validados. Aguardando validação do segundo fator (2FA)."
             )
         # Guarda o usuário na sessão para o 2FA
             request.session['pre_otp_user_id'] = usuario.id
@@ -169,13 +171,16 @@ def cadastro_view(request):
                 cpf=cpf,
                 perfil=perfil
             )
-            device = TOTPDevice.objects.get_or_create(user=Usuario.objects.get(username=username), name="Celular Principal", confirmed=False)
-            return redirect('login')
-            
+            device, created = TOTPDevice.objects.get_or_create(
+            user=usuario,
+            name="Celular Principal",
+            defaults={
+            'confirmed': False
+            }
+            )
 
-        
 
-    return render(request, 'accounts/cadastro.html' , {'erro': erro})
+    return redirect('login')
 
 
 
@@ -290,6 +295,15 @@ def verificar_2fa_view(request):
 
             # Login concluído.
             login(request, usuario)
+
+             # Registra no histórico que o login foi realmente concluído.
+            AuditLog.objects.create(
+            usuario=usuario,
+            evento="Login bem-sucedido",
+            ip=request.META.get('REMOTE_ADDR'),
+            resultado="Sucesso",
+            detalhes="Login concluído após validação do usuário, senha e segundo fator (2FA)."
+            )
 
             # Zera as tentativas do 2FA.
             usuario.tentativas_2fa = 0
