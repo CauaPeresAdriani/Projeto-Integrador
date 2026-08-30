@@ -217,3 +217,5 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+run_security_tests.sh
+.security-reports/
