@@ -105,4 +105,127 @@ O sistema pode ser utilizado tanto em pesquisas menores quanto em estudos envolv
 - Git
 - GitHub
 
+## Como executar o projeto:
+
+## Windows:
+
+1. Clonar o repositório
+
+Abra o PowerShell e execute:
+
+git clone https://github.com/CauaPeresAdriani/Projeto-Integrador.git
+cd Projeto-Integrador
+
+2. Criar o ambiente virtual
+
+python -m venv venv
+
+Ative o ambiente virtual:
+
+.\venv\Scripts\Activate.ps1
+
+3. Instalar as dependências
+
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+
+4. Configurar o banco de dados
+
+Crie um banco de dados MySQL local:
+
+CREATE DATABASE clinsecure;
+
+5. Configurar o arquivo .env
+
+Na raiz do projeto, crie um arquivo chamado .env:
+
+SECRET_KEY=sua-chave-secreta
+DB_NAME=clinsecure
+DB_USER=root
+DB_PASSWORD=sua-senha
+DB_HOST=localhost
+DB_PORT=3306
+
+Substitua os valores pelas configurações do seu MySQL.
+
+6. Executar as migrations
+
+python manage.py migrate
+
+7. Iniciar o servidor
+
+python manage.py runserver
+
+Acesse:
+
+http://127.0.0.1:8000/
+
+## Linux:
+
+1. Clonar o repositório
+
+Abra o terminal e execute:
+
+git clone https://github.com/CauaPeresAdriani/Projeto-Integrador.git
+cd Projeto-Integrador
+
+2. Criar o ambiente virtual
+
+python3 -m venv venv
+
+Ative o ambiente virtual:
+
+source venv/bin/activate
+
+3. Instalar as dependências
+
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+
+4. Configurar o banco de dados
+
+Crie um banco de dados MySQL local:
+
+CREATE DATABASE clinsecure;
+
+5. Configurar o arquivo .env
+
+Na raiz do projeto, crie um arquivo chamado .env:
+
+SECRET_KEY=sua-chave-secreta
+DB_NAME=clinsecure
+DB_USER=root
+DB_PASSWORD=sua-senha
+DB_HOST=localhost
+DB_PORT=3306
+
+Substitua os valores pelas configurações do seu MySQL.
+
+6. Executar as migrations
+
+python manage.py migrate
+
+7. Iniciar o servidor
+
+python manage.py runserver
+
+Acesse:
+
+http://127.0.0.1:8000/
+
+## Execução após a primeira configuração 
+
+Depois que o ambiente virtual e o banco de dados já estiverem configurados, não é necessário repetir todas as etapas.
+
+Windows
+
+.\venv\Scripts\Activate.ps1
+python manage.py runserver
+
+Linux
+
+source venv/bin/activate
+python manage.py runserver
+
+O arquivo .env deve permanecer apenas no ambiente local e não deve ser enviado ao repositório.
   
