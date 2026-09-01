@@ -1,37 +1,43 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <title>Login - Projeto Integrador</title>
-</head>
-<body>
-    <h2>Tela de Login</h2>
+{% extends 'accounts/base.html' %}
 
-    <foServer Error (500)rm method="POST">
-        {% csrf_token %} 
+{% block title %}Login - Projeto Integrador{% endblock %}
+
+{% block content %}
+<div class="container d-flex justify-content-center align-items-center min-vh-100">
+    <div class="card shadow p-4" style="width: 100%; max-width: 400px;">
         
-        <div>
-            <label>Usuário:</label><br>
-            <input type="text" name="username" required>
-        </div>
-        <br>
-        <div>
-            <label>Senha:</label><br>
-            <input type="password" name="password" required>
-        </div>
-        <br>
-        <button type="submit">Entrar</button>
-        <div>
-            <a href="{% url 'cadastro' %}">Não tem conta? Cadastre-se</a>
-        </div>
-        <div>
-            <a href="{% url 'password_reset' %}">Esqueci minha senha</a>
-        </div>
-    </form>
+        <h2 class="text-center mb-4">Tela de Login</h2>
 
-    
-    {% if erro %}
-        <p style="color: red; margin-top: 15px;">{{ erro }}</p>
-    {% endif %}
-</body>
-</html>
+        <form method="POST">
+            {% csrf_token %} 
+            
+            <div class="mb-3">
+                <label for="username" class="form-label">Usuário:</label>
+                <input type="text" name="username" id="username" class="form-control" required>
+            </div>
+
+            
+            <div class="mb-3">
+                <label for="password" class="form-label">Senha:</label>
+                <input type="password" name="password" id="password" class="form-control" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 mb-3">Entrar</button>
+
+          
+            <div class="d-flex justify-content-between text-center">
+                <a href="{% url 'cadastro' %}" class="text-decoration-none small">Criar conta</a>
+                <a href="{% url 'password_reset' %}" class="text-decoration-none small">Esqueci a senha</a>
+            </div>
+        </form>
+
+        
+        {% if erro %}
+            <div class="alert alert-danger mt-3 py-2 text-center" role="alert">
+                {{ erro }}
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
