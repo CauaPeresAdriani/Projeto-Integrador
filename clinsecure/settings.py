@@ -183,7 +183,5 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 # Expiração do Token em 1 hora (Requisito 2.3)
 PASSWORD_RESET_TIMEOUT = 3600
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-PASSWORD_RESET_TIMEOUT = 3600  # Requisito 2.3: Expira em 1 hora
 
 DEBUG=True
