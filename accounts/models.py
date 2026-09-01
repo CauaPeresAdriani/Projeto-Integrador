@@ -4,6 +4,8 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 
 
+## criando modelo entidade para classe usuario, herdando os atributos padrao de abstract user
+## adicionando campos como cpf e perfil
 class Usuario(AbstractUser):
     cpf = models.CharField(max_length=11, unique=True)
     perfil = models.CharField(max_length=20, choices=[
@@ -15,18 +17,13 @@ class Usuario(AbstractUser):
 
     REQUIRED_FIELDS = ['email', 'cpf', 'perfil']
 
-    
+## adicionando campos para validação de dois fatores e bloqueado
     dois_fatores_ativado = models.BooleanField(default=False)
     secret_key = models.CharField(max_length=32, blank=True, null=True)
-
     tentativas_login = models.PositiveIntegerField(default=0)
-
     bloqueado_ate = models.DateTimeField(null=True, blank=True)
-
     ultimo_login_falhou = models.DateTimeField(null=True, blank=True)
-
     tentativas_2fa = models.PositiveIntegerField(default=0)
-    
     bloqueado_2fa_ate = models.DateTimeField(null=True, blank=True)
     def __str__(self):
         return self.username
@@ -35,7 +32,7 @@ class Usuario(AbstractUser):
 
 
 
-
+## criando a classe aluno  e passando as variaveis padarao que usaremos na regra de negocio
 class Aluno(models.Model):
     nome = models.CharField(max_length=100)
     cpf = models.CharField(max_length=11, unique=True)
@@ -44,6 +41,8 @@ class Aluno(models.Model):
     def __str__(self):
         return self.nome
 
+
+## classe/entidade responsavel por armazenar os registros de logs para auditoria
 class AuditLog(models.Model):
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
     evento = models.CharField(max_length=100)
@@ -55,6 +54,7 @@ class AuditLog(models.Model):
     def __str__(self):
         return f"{self.usuario.username} - {self.evento} - {self.data_hora}"
 
+## entidade responsavel por armazenar o concentimento cedido pelo usuario
 class Consentimento(models.Model):
     aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE)
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
@@ -67,6 +67,8 @@ class Consentimento(models.Model):
     def __str__(self):
         return f"Consentimento de {self.usuario.username} para {self.aluno.nome}"
 
+
+## entidade de documento com os campos necessarios para auditoria e controle de acessos
 class Documento(models.Model):
     aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE)
     responsavel_id = models.ForeignKey(Usuario, on_delete=models.CASCADE)
@@ -78,6 +80,7 @@ class Documento(models.Model):
     def __str__(self):
         return f"{self.nome_original} de {self.responsavel_id.username} para {self.aluno.nome}"
 
+## classe acesso importante para auditoria do controle de acesso e vizualização
 class Acesso(models.Model):
     documento_id = models.ForeignKey(Documento, on_delete=models.CASCADE)
     usuario_id = models.ForeignKey(Usuario, on_delete=models.CASCADE)
