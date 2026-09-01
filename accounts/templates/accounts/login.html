@@ -7,7 +7,7 @@
 <body>
     <h2>Tela de Login</h2>
 
-    <form method="POST">
+    <foServer Error (500)rm method="POST">
         {% csrf_token %} 
         
         <div>
@@ -21,7 +21,12 @@
         </div>
         <br>
         <button type="submit">Entrar</button>
-        <a href="{% url 'cadastro' %}">Não tem conta? Cadastre-se</a>
+        <div>
+            <a href="{% url 'cadastro' %}">Não tem conta? Cadastre-se</a>
+        </div>
+        <div>
+            <a href="{% url 'password_reset' %}">Esqueci minha senha</a>
+        </div>
     </form>
 
     

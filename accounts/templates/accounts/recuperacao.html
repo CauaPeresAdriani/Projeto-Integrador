@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Recuperar Senha - ClinSecure</title>
+</head>
+<body>
+    <h2>Recuperação de Senha</h2>
+    <p>Digite seu Usuário ou E-mail cadastrado.</p>
+    
+    {% if erro %}
+        <p style="color: red;">{{ erro }}</p>
+    {% endif %}
+
+    <form method="POST">
+        {% csrf_token %}
+        <label>Usuário ou E-mail:</label>
+        <input type="text" name="identificador" required>
+        <button type="submit">Redefinir Senha</button>
+    </form>
+    
+    <br>
+    <a href="{% url 'login' %}">Voltar para o Login</a>
+</body>
+</html>

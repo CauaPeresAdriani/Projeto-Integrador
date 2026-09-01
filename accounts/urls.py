@@ -1,5 +1,8 @@
 from django.urls import path, include
 from . import views
+from django.urls import path
+from django.contrib.auth import views as auth_views
+from . import views
 
 urlpatterns = [
     path('', views.home_view, name='home'),
@@ -8,5 +11,21 @@ urlpatterns = [
     path('cadastro/', views.cadastro_view, name='cadastro'),
     path('verificar_2fa/', views.verificar_2fa_view, name='verificar_2fa'),
     path('logout/', views.meu_logout_view, name='logout'),
-    path('home/', views.home_view, name='home')
+    path('home/', views.home_view, name='home'),
+
+    path('recuperar-senha/', 
+         auth_views.PasswordResetView.as_view(template_name='accounts/password_reset.html'), 
+         name='password_reset'),
+
+    path('recuperar-senha/enviado/', 
+         auth_views.PasswordResetDoneView.as_view(template_name='accounts/password_reset_done.html'), 
+         name='password_reset_done'),
+
+    path('recuperar-senha/<uidb64>/<token>/', 
+         auth_views.PasswordResetConfirmView.as_view(template_name='accounts/password_reset_confirm.html'), 
+         name='password_reset_confirm'),
+
+    path('recuperar-senha/concluido/', 
+         auth_views.PasswordResetCompleteView.as_view(template_name='accounts/password_reset_complete.html'), 
+         name='password_reset_complete'),
 ]

@@ -11,6 +11,15 @@ from accounts.models import Usuario, AuditLog
 from datetime import timedelta 
 from django.utils import timezone
 import time
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import send_mail
+from django.urls import reverse
+from django.db.models import Q
+import os
+
+
 
 def meu_login_view(request):
     ## Instanciando variavel erro como none
@@ -150,6 +159,7 @@ def cadastro_view(request):
 ## verificando se todos os campos obrigatorios foram preenchidos     
         if not username or not email or not cpf or not password:
             erro = "Por favor, preencha todos os campos obrigatórios."
+            return render(request, 'accounts/cadastro.html', {'erro': erro})
 ## verificando se o nome de usuario e valido       
         if not re.match(r'^[a-zA-Z0-9_]+$', username):
             erro = "O nome de usuário não pode ser um e-mail. Use apenas letras, números e underline (_), sem espaços."
@@ -161,6 +171,7 @@ def cadastro_view(request):
 ## verificando se o cpf e valido
         elif Usuario.objects.filter(cpf=cpf).exists():
             erro = "Este CPF já está cadastrado no sistema."
+            return render(request, 'accounts/cadastro.html', {'erro': erro})
 ## se nao tiver erro
         if not erro:
 ## criando o usuario com os dados digitados pelo usuario no html 
@@ -178,10 +189,9 @@ def cadastro_view(request):
             'confirmed': False
             }
             )
-
-
-    return redirect('login')
-
+            return redirect('login')
+        
+    return render(request, 'accounts/cadastro.html', {'erro': erro})
 
 
 def meu_setup_2fa_view(request):
@@ -385,3 +395,42 @@ def meu_logout_view(request):
 
     # Volta para a tela de login.
     return redirect('login')
+
+
+def recuperacao_view(request):
+    erro = None
+    if request.method == 'POST':
+        # Captura o valor que pode ser tanto username quanto email
+        identificador = request.POST.get('identificador', '').strip()
+        
+        if not identificador:
+            return render(request, 'accounts/recuperacao.html', {'erro': 'Preencha o campo.'})
+
+        # Requisito 2.1: Busca o usuário usando Q (Email OU Username)
+        usuario = Usuario.objects.filter(
+            Q(email=identificador) | Q(username=identificador)
+        ).first()
+
+        if usuario:
+            # Requisito 2.2: Gera o token criptográfico
+            uid = urlsafe_base64_encode(force_bytes(usuario.pk))
+            token = default_token_generator.make_token(usuario)
+
+            # Monta o link absoluto que irá no corpo do e-mail
+            link = request.build_absolute_uri(
+                reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
+            )
+
+            # Envia o e-mail real
+            send_mail(
+                subject='ClinSecure - Recuperação de Senha',
+                message=f'Olá, {usuario.username}.\n\nVocê solicitou a redefinição de senha. Clique no link abaixo para criar uma nova credencial:\n{link}\n\nSe não foi você, ignore este e-mail.',
+                from_email=os.getenv('EMAIL_HOST_USER'),
+                recipient_list=[usuario.email],
+                fail_silently=False,
+            )
+
+        # Redireciona sempre para a mesma tela de sucesso (evita enumeração de usuários)
+        return redirect('password_reset_done')
+
+    return render(request, 'accounts/recuperacao.html', {'erro': erro})
