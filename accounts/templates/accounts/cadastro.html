@@ -1,52 +1,77 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <title>Login - Projeto Integrador</title>
-</head>
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}Cadastro - Projeto Integrador{% endblock %}
+
+{% block content %}
+<header class="header">
+    <div class="profile">
+        <img src="{% static 'img/Profile.webp' %}" alt="ClinSecure Logo">
+        <h2>ClinSecure</h2>
+    </div>
+    <nav>
+        <a href="{% url 'home' %}">Início</a>
+        <a href="{% url 'cadastro' %}">Cadastro</a>
+        <a href="{% url 'login' %}">Login</a>
+        <a href="{% url 'password_reset' %}">Esqueci a senha</a>
+    </nav>
+</header>
 <body>
-    <h2>Tela de Cadastro ClinSecure</h2>
 
-    <form method="POST">
-        {% csrf_token %} 
+<div class="login-container">
+    <div class="card shadow p-4 login-card">
         
-        <div>
-            <label>Usuário:</label><br>
-            <input type="text" name="username" required>
-        </div>
-        <br>
-        <div>
-            <label>Senha:</label><br>
-            <input type="password" name="password" required>
-        </div>
-        <br>
-        <div>
-            <label>Email:</label><br>
-            <input type="email" name="email" required>
-        </div>
-        <br>
-        <div>
-            <label>CPF:</label><br>
-            <input type="text" name="cpf" maxlength="11" required>
-        </div>
-        <br>
-        <div>
-            <label>Perfil:</label><br>
-            <select name="perfil" id="perfil" required>
-            <option value="Aluno">Aluno</option>
-            <option value="Professor">Professor</option>
-            <option value="Administrador">Administrador</option>
-            <option value="Coordenador">Coordenador</option>
-            </select>
-        </div>
-        <br>
-        <button type="submit">Cadastrar</button>
-        <a href="{% url 'login' %}">Já tem conta? Faça login</a>
-    </form>
+        <h2 class="login-title">Cadastro ClinSecure</h2>
 
-    
-    {% if erro %}
-        <p style="color: red; margin-top: 15px;">{{ erro }}</p>
-    {% endif %}
+        <form  method="POST">
+            {% csrf_token %} 
+            
+            <div class="form-group">
+                <label for="username" class="labels">Usuário:</label>
+                <input type="text" name="username" id="username" class="inputs" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password" class="labels">Senha:</label>
+                <input type="password" name="password" id="password" class="inputs" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email" class="labels">Email:</label>
+                <input type="email" name="email" id="email" class="inputs" required>
+            </div>
+
+            <div class="form-group">
+                <label for="cpf" class="labels">CPF:</label>
+                <input type="text" name="cpf" id="cpf" class="inputs" maxlength="11" required>
+            </div>
+
+            <div class="form-group">
+                <label for="perfil" class="labels">Perfil:</label>
+                <select name="perfil" id="perfil" class="inputs" required>
+                    <option value="Aluno">Aluno</option>
+                    <option value="Professor">Professor</option>
+                    <option value="Administrador">Administrador</option>
+                    <option value="Coordenador">Coordenador</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn-submit">Cadastrar</button>
+
+            <div class="form-links" style="justify-content: center;">
+                <a href="{% url 'login' %}">Já tem conta? Faça login</a>
+            </div>
+        </form>
+
+        {% if erro %}
+            <div class="alert-error" role="alert">
+                {{ erro }}
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+
 </body>
-</html>
+
+{% endblock %}

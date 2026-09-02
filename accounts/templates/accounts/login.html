@@ -1,20 +1,10 @@
-
 {% extends 'accounts/base.html' %}
-{% block title %}Login - Projeto Integrador{% endblock %}
-{% block content %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
-</head>
-<body>
 
+{% block title %}Login - Projeto Integrador{% endblock %}
 
- <header class="header">
+{% block content %}
+<header class="header">
     <div class="profile">
         <img src="{% static 'img/Profile.webp' %}" alt="ClinSecure Logo">
         <h2>ClinSecure</h2>
@@ -24,46 +14,37 @@
         <a href="{% url 'cadastro' %}">Cadastro</a>
         <a href="{% url 'login' %}">Login</a>
         <a href="{% url 'password_reset' %}">Esqueci a senha</a>
-        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Alternar tema claro/escuro">
-            <i class="fa-solid fa-moon"></i>
-            <i class="fa-solid fa-sun"></i>
-        </button>
-        <button class="menu-toggle" id="menuToggle" type="button" aria-label="Abrir menu" aria-expanded="false">
-            <i class="fa-solid fa-bars"></i>
-        </button>
     </nav>
 </header>
 
-<div class="container d-flex justify-content-center align-items-center min-vh-100">
-    <div class="card shadow p-4" style="width: 100%; max-width: 400px;">
+<div class="login-container">
+    <div class="card shadow p-4 login-card">
         
-        <h2 class="text-center mb-4">Tela de Login</h2>
+        <h2 class="login-title">Tela de Login</h2>
 
-      
         <form method="POST">
             {% csrf_token %} 
             
-            <div style="margin-bottom: 16px; text-align: left;">
-                <label for="username" style="display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 0.9rem;">Usuário:</label>
-                <input type="text" name="username" id="username" required style="width: 100%; padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface-2); color: var(--text);">
+            <div class="form-group">
+                <label for="username" class="labels">Usuário:</label>
+                <input type="text" name="username" id="username" class="inputs" required>
             </div>
 
-            <div style="margin-bottom: 24px; text-align: left;">
-                <label for="password" style="display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 0.9rem;">Senha:</label>
-                <input type="password" name="password" id="password" required style="width: 100%; padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface-2); color: var(--text);">
+            <div class="form-group">
+                <label for="password" class="labels">Senha:</label>
+                <input type="password" name="password" id="password" class="inputs" required>
             </div>
 
-            <button type="submit" class="contacts primary" style="width: 100%; justify-content: center; cursor: pointer; margin-bottom: 16px;">Entrar</button>
+            <button type="submit" class="btn-submit">Entrar</button>
 
-            <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
-                <a href="{% url 'cadastro' %}" style="color: var(--accent-2);">Criar conta</a>
-                <a href="{% url 'password_reset' %}" style="color: var(--text-muted);">Esqueci a senha</a>
+            <div class="form-links">
+                <a href="{% url 'cadastro' %}">Criar conta</a>
+                <a href="{% url 'password_reset' %}">Esqueci a senha</a>
             </div>
         </form>
-
         
         {% if erro %}
-            <div class="alert alert-danger mt-3 py-2 text-center" role="alert">
+            <div class="alert-error" role="alert">
                 {{ erro }}
             </div>
         {% endif %}
@@ -71,5 +52,3 @@
     </div>
 </div>
 {% endblock %}
-</body>
-</html>
