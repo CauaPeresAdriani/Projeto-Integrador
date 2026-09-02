@@ -56,6 +56,14 @@ h2 {
 }
 
 
+.center-text{
+    padding: 15%;
+    align-items: center;
+    width: 100%;
+    text-align: center;
+
+}
+
 .login-card {
     width: 100%;
     max-width: 30%;
@@ -76,7 +84,7 @@ h2 {
     text-align: left;
 }
 
-/* Botão principal de envio em vermelho */
+
 .btn-submit {
     width: 100%;
     padding: 12px;
@@ -95,10 +103,28 @@ h2 {
 }
 
 
+.text-links{
+    
+    text-align: center;
+    
+    padding: 30px;
+}
+.text-links a {
+    color: var(--text-muted);
+    transition: color 0.2s ease;
+    text-align: center;
+    align-items: center;
+}
+
+.text-links a:hover {
+    color: var(--accent);
+}
+
 .form-links {
     display: flex;
     justify-content: space-between;
     font-size: 0.85rem;
+    text-align: center;
 }
 
 .form-links a {
@@ -110,7 +136,6 @@ h2 {
     color: var(--accent);
 }
 
-/* Caixa de alerta de erro */
 .alert-error {
     color: #DC3545;
     background-color: rgba(220, 53, 69, 0.1);
