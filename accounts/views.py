@@ -3,7 +3,7 @@ from io import BytesIO
 import re
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
+from django.http import HttpResponse, request
 from django.shortcuts import redirect, render
 import qrcode
 from django_otp.plugins.otp_totp.models import TOTPDevice
@@ -416,7 +416,16 @@ def recuperacao_view(request):
             Q(email=identificador) | Q(username=identificador)
         ).first()
 
+        
         if usuario:
+             # Registra que o usuário solicitou recuperação de senha.
+            AuditLog.objects.create(
+        usuario=usuario,
+        evento="Solicitação de recuperação de senha",
+        ip=request.META.get('REMOTE_ADDR'),
+        resultado="Sucesso",
+        detalhes="Usuário solicitou o envio de um link para recuperação de senha."
+    )
             # Requisito 2.2: Gera o token criptográfico
             uid = urlsafe_base64_encode(force_bytes(usuario.pk))
             token = default_token_generator.make_token(usuario)
@@ -439,3 +448,120 @@ def recuperacao_view(request):
         return redirect('password_reset_done')
 
     return render(request, 'accounts/recuperacao.html', {'erro': erro})
+
+def confirmar_recuperacao_senha_view(request, uidb64, token):
+
+    # Importa função para decodificar o UID
+    from django.utils.http import urlsafe_base64_decode
+
+    # Importa o modelo de usuário
+    from django.contrib.auth import get_user_model
+
+    # Pega o modelo de usuário do projeto
+    User = get_user_model()
+
+    # Tenta encontrar o usuário
+    try:
+
+        # Decodifica o UID recebido
+        uid = urlsafe_base64_decode(uidb64).decode()
+
+        # Busca o usuário no banco
+        usuario = User.objects.get(pk=uid)
+
+    # Trata UID inválido ou usuário inexistente
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+
+        # Mostra que o link é inválido
+        return render(
+            request,
+            'accounts/password_reset_confirm.html',
+            {
+                'validlink': False,
+                'erro': 'Link de recuperação inválido ou expirado.'
+            }
+        )
+
+    # Verifica se o token ainda é válido
+    if not default_token_generator.check_token(usuario, token):
+
+        # Registra a falha no AuditLog
+        AuditLog.objects.create(
+            usuario=usuario,
+            evento="Recuperação com falha — token inválido/expirado",
+            ip=request.META.get('REMOTE_ADDR'),
+            resultado="Falha",
+            detalhes="Tentativa de recuperação de senha utilizando token inválido ou expirado."
+        )
+
+        # Mostra mensagem de erro
+        return render(
+            request,
+            'accounts/password_reset_confirm.html',
+            {
+                'validlink': False,
+                'erro': 'Link de recuperação inválido ou expirado.'
+            }
+        )
+
+    # Verifica se o formulário foi enviado
+    if request.method == 'POST':
+
+        # Pega a nova senha
+        senha1 = request.POST.get('new_password1')
+
+        # Pega a confirmação da senha
+        senha2 = request.POST.get('new_password2')
+
+        # Verifica se os campos foram preenchidos
+        if not senha1 or not senha2:
+
+            # Mostra mensagem de erro
+            return render(
+                request,
+                'accounts/password_reset_confirm.html',
+                {
+                    'validlink': True,
+                    'erro': 'Preencha os dois campos de senha.'
+                }
+            )
+
+        # Verifica se as senhas são iguais
+        if senha1 != senha2:
+
+            # Mostra mensagem de erro
+            return render(
+                request,
+                'accounts/password_reset_confirm.html',
+                {
+                    'validlink': True,
+                    'erro': 'As senhas não são iguais.'
+                }
+            )
+
+        # Define a nova senha
+        usuario.set_password(senha1)
+
+        # Salva a nova senha
+        usuario.save()
+
+        # Registra a recuperação com sucesso
+        AuditLog.objects.create(
+            usuario=usuario,
+            evento="Recuperação realizada com sucesso",
+            ip=request.META.get('REMOTE_ADDR'),
+            resultado="Sucesso",
+            detalhes="Senha redefinida com sucesso através do processo de recuperação."
+        )
+
+        # Vai para a página de conclusão
+        return redirect('password_reset_complete')
+
+    # Mostra o formulário de nova senha
+    return render(
+        request,
+        'accounts/password_reset_confirm.html',
+        {
+            'validlink': True
+        }
+    )
