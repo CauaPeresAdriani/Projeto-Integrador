@@ -1,0 +1,218 @@
+html {
+    scroll-behavior: smooth;
+}
+
+:root {
+    --bg: #0A0F1D;
+    --surface: #121A2B;
+    --surface-2: #1A2438;
+    --border: rgba(255,255,255,.08);
+    --text: #E8ECF4;
+    --text-muted: #B0BACF;
+    --accent: #4C6FFF;
+    --accent-2: #38BDF8;
+    --shadow: rgba(0,0,0,.35);
+
+    --font-body: "Inter", sans-serif;
+    --font-mono: "JetBrains Mono", monospace;
+
+    --radius-md: 16px;
+    --radius-lg: 20px;
+}
+
+:root[data-theme="light"] {
+    --bg: #F4F6FB;
+    --surface: #FFFFFF;
+    --surface-2: #E7EBF5;
+    --border: rgba(15,23,42,.08);
+    --text: #0F172A;
+    --text-muted: #5B6478;
+    --accent: #3352E1;
+    --accent-2: #0B7FA3;
+    --shadow: rgba(15,23,42,.08);
+}
+
+* { 
+    box-sizing: border-box; 
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    transition: background-color .35s, color .35s;
+    background-color: #080C16;
+}
+
+h2 {
+    color: var(--text);
+    font-weight: 700;
+}
+
+a {
+    text-decoration: none;
+    color: var(--text);
+    font-weight: 500;
+}
+
+a:focus-visible,
+button:focus-visible {
+    outline: 2px solid var(--accent-2);
+    outline-offset: 3px;
+}
+
+header.header {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    height: 72px;
+    padding: 0 32px;
+    border-radius: var(--radius-lg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(18, 26, 43, .8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    width: min(1100px, 90%);
+    box-shadow: 0 10px 30px var(--shadow);
+    border: 1px solid var(--border);
+    transition: .3s, background-color .35s ease;
+}
+
+header.header:hover {
+    transform: translateX(-50%) translateY(-2px);
+}
+
+.profile {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.profile img {
+    width: 48px;
+    height: 48px;
+   
+    object-fit: cover;
+    border: 1px solid var(--border);
+}
+
+.profile h2 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+header.header nav {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    margin: 0;
+}
+
+header.header nav a {
+    font-size: .9rem;
+    color: var(--text-muted);
+    transition: .25s;
+}
+
+header.header nav a:hover {
+    color: var(--accent-2);
+}
+
+.card {
+    padding: 28px 20px;
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    text-align: center;
+    transition: .25s;
+}
+
+.card:hover {
+    transform: translateY(-6px);
+    border-color: var(--accent);
+}
+
+.theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: .95rem;
+    transition: .25s;
+    flex-shrink: 0;
+}
+
+.theme-toggle:hover {
+    color: var(--accent-2);
+    border-color: var(--accent);
+    transform: translateY(-2px);
+}
+
+.theme-toggle .fa-sun { display: none; }
+.theme-toggle .fa-moon { display: inline; }
+
+:root[data-theme="light"] .theme-toggle .fa-sun { display: inline; }
+:root[data-theme="light"] .theme-toggle .fa-moon { display: none; }
+
+.menu-toggle {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    header.header nav a {
+        display: none;
+    }
+
+    .menu-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border: none;
+        background: transparent;
+        color: var(--text);
+        cursor: pointer;
+        font-size: 22px;
+    }
+}
+
+@media (max-width: 640px) {
+    header.header {
+        padding: 0 18px;
+        height: 64px;
+    }
+
+    header.header nav {
+        gap: 16px;
+    }
+
+    header.header nav a {
+        font-size: .78rem;
+    }
+
+    .card {
+        width: 100%;
+        max-width: 360px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation: none !important;
+        transition: none !important;
+    }
+}
