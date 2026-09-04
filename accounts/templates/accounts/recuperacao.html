@@ -1,10 +1,30 @@
-<!DOCTYPE html>
-<html lang="pt-br">
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}Cadastro - Projeto Integrador{% endblock %}
+
+{% block content %}
 <head>
     <meta charset="UTF-8">
     <title>Recuperar Senha - ClinSecure</title>
 </head>
 <body>
+    <header class="header">
+    <div class="profile">
+        <img src="{% static 'img/Profile.webp' %}" alt="ClinSecure Logo">
+        <h2>ClinSecure</h2>
+    </div>
+    <nav>
+        <a href="{% url 'home' %}">Início</a>
+        <a href="{% url 'cadastro' %}">Cadastro</a>
+        <a href="{% url 'login' %}">Login</a>
+        <a href="{% url 'password_reset' %}">Esqueci a senha</a>
+    </nav>
+</header>
+
+    <div class="login-container">
+        <div class="card shadow p-4 login-card">
+
     <h2>Recuperação de Senha</h2>
     <p>Digite seu Usuário ou E-mail cadastrado.</p>
     
@@ -15,11 +35,14 @@
     <form method="POST">
         {% csrf_token %}
         <label>Usuário ou E-mail:</label>
-        <input type="text" name="identificador" required>
-        <button type="submit">Redefinir Senha</button>
+        <input class="inputs" type="text" name="identificador" required>
+        <button class="btn-submit" type="submit">Redefinir Senha</button>
     </form>
     
     <br>
     <a href="{% url 'login' %}">Voltar para o Login</a>
+
+        </div>
+    </div>
 </body>
-</html>
+{% endblock %}

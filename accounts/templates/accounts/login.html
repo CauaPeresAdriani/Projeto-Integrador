@@ -1,37 +1,54 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <title>Login - Projeto Integrador</title>
-</head>
-<body>
-    <h2>Tela de Login</h2>
+{% extends 'accounts/base.html' %}
+{% load static %}
 
-    <foServer Error (500)rm method="POST">
-        {% csrf_token %} 
+{% block title %}Login - Projeto Integrador{% endblock %}
+
+{% block content %}
+<header class="header">
+    <div class="profile">
+        <img src="{% static 'img/Profile.webp' %}" alt="ClinSecure Logo">
+        <h2>ClinSecure</h2>
+    </div>
+    <nav>
+        <a href="{% url 'home' %}">Início</a>
+        <a href="{% url 'cadastro' %}">Cadastro</a>
+        <a href="{% url 'login' %}">Login</a>
+        <a href="{% url 'password_reset' %}">Esqueci a senha</a>
+    </nav>
+</header>
+
+<div class="login-container">
+    <div class="card shadow p-4 login-card">
         
-        <div>
-            <label>Usuário:</label><br>
-            <input type="text" name="username" required>
-        </div>
-        <br>
-        <div>
-            <label>Senha:</label><br>
-            <input type="password" name="password" required>
-        </div>
-        <br>
-        <button type="submit">Entrar</button>
-        <div>
-            <a href="{% url 'cadastro' %}">Não tem conta? Cadastre-se</a>
-        </div>
-        <div>
-            <a href="{% url 'password_reset' %}">Esqueci minha senha</a>
-        </div>
-    </form>
+        <h2 class="login-title">Tela de Login</h2>
 
-    
-    {% if erro %}
-        <p style="color: red; margin-top: 15px;">{{ erro }}</p>
-    {% endif %}
-</body>
-</html>
+        <form method="POST">
+            {% csrf_token %} 
+            
+            <div class="form-group">
+                <label for="username" class="labels">Usuário:</label>
+                <input type="text" name="username" id="username" class="inputs" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password" class="labels">Senha:</label>
+                <input type="password" name="password" id="password" class="inputs" required>
+            </div>
+
+            <button type="submit" class="btn-submit">Entrar</button>
+
+            <div class="form-links">
+                <a href="{% url 'cadastro' %}">Criar conta</a>
+                <a href="{% url 'password_reset' %}">Esqueci a senha</a>
+            </div>
+        </form>
+        
+        {% if erro %}
+            <div class="alert-error" role="alert">
+                {{ erro }}
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
