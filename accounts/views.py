@@ -391,6 +391,11 @@ def home_view(request):
     # Exibe a página inicial.
     return render(request, 'accounts/home.html')
 
+
+
+def senha_reset_complete_view(request):
+    return render(request, 'accounts/password_reset_complete')
+
 ## LOGICA DE LOGOUT ##
 # Faz o logout do usuário.
 def meu_logout_view(request):
@@ -565,3 +570,5 @@ def confirmar_recuperacao_senha_view(request, uidb64, token):
             'validlink': True
         }
     )
+
+

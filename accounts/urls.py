@@ -3,7 +3,7 @@ from . import views
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
-from accounts.views import recuperacao_view, confirmar_recuperacao_senha_view  
+from accounts.views import recuperacao_view, confirmar_recuperacao_senha_view, senha_reset_complete_view  
 
 
 ## passando caminhos para as views e html correspondentes
@@ -38,4 +38,6 @@ path(
     ),
     name='password_reset_complete'
 ),
+
+
 ]
