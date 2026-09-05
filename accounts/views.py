@@ -393,8 +393,6 @@ def home_view(request):
 
 
 
-def senha_reset_complete_view(request):
-    return render(request, 'accounts/password_reset_complete')
 
 ## LOGICA DE LOGOUT ##
 # Faz o logout do usuário.
