@@ -1,27 +1,56 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    <h2>Tela de verificação do token 2fa</h2>
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}Login - Projeto Integrador{% endblock %}
+
+{% block content %}
+<header class="header">
+    <div class="profile">
+        <img src="{% static 'img/Profile.webp' %}" alt="ClinSecure Logo">
+        <h2>ClinSecure</h2>
+    </div>
+    <nav>
+        <a href="{% url 'home' %}">Início</a>
+        <a href="{% url 'cadastro' %}">Cadastro</a>
+        <a href="{% url 'login' %}">Login</a>
+        <a href="{% url 'password_reset' %}">Esqueci a senha</a>
+    </nav>
+</header>
+
+     <div class="top-text">
+            <h1>Verifique o token no seu app autenticador</h1>
+            
+    </div>
+
+    <div class="login-container">
+
+       
+
+         <div class="card shadow p-4 login-card">
+
+            <h2 class="login-title"> Verificação de token 2FA</h2>
 
     <form method="POST">
         {% csrf_token %} 
         
         <div>
             <label>Token de 6 digitos:</label><br>
-            <input type="text" name="token" required>
+            <input class="token-style" type="text" name="token" maxlength="6" required>
         </div>
 
-        <button type="submit">Verificar Token</button>
+        <button type="submit" class="btn-submit">Verificar Token</button>
     </form>
 
     
     {% if erro %}
         <p style="color: red; margin-top: 15px;">{{ erro }}</p>
     {% endif %}
-</body>
-</html>
+
+
+         </div>
+
+
+        
+    </div>
+
+{% endblock %}

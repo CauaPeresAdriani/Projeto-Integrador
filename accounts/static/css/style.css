@@ -260,7 +260,20 @@ card form{
 .theme-toggle .fa-sun { display: none; }
 .theme-toggle .fa-moon { display: inline; }
 
+.token-style{
+    margin: 15px; 
+    border-radius: 15px;
+    text-align: center;
+    max-width: 90%;
+    max-height: 90%;
+}
 
+.top-text{
+
+text-align: center;
+margin: 30px;
+
+}
 
 .menu-toggle {
     display: none;
