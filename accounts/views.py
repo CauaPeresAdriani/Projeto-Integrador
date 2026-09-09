@@ -439,24 +439,25 @@ def recuperacao_view(request):
             )
 
             # Envia o e-mail real
-    try:
-        send_mail(
-            subject='ClinSecure - Recuperação de Senha',
-            message=f'Olá, {usuario.username}.\n\nVocê solicitou a redefinição de senha. Clique no link abaixo para criar uma nova credencial:\n{link}\n\nSe não foi você, ignore este e-mail.',
-            from_email=os.getenv('EMAIL_HOST_USER'),
-            recipient_list=[usuario.email],
-            fail_silently=False,
-    )
-    except Exception:
-        erro = 'Não foi possível enviar o e-mail de recuperação. Tente novamente mais tarde.'
-        return render(
-            request,
-            'accounts/recuperacao.html',
-            {'erro': erro}
-        )
+            try:
+                send_mail(
+                    subject='ClinSecure - Recuperação de Senha',
+                    message=f'Olá, {usuario.username}.\n\nVocê solicitou a redefinição de senha. Clique no link abaixo para criar uma nova credencial:\n{link}\n\nSe não foi você, ignore este e-mail.',
+                    from_email=os.getenv('EMAIL_HOST_USER'),
+                    recipient_list=[usuario.email],
+                    fail_silently=False,
+            )
+            except Exception as e:
+                print(f"ERRO SMTP: {type(e).__name__}: {e}")
+                erro = 'Não foi possível enviar o e-mail de recuperação. Tente novamente mais tarde.'
+                return render(
+                    request,
+                    'accounts/recuperacao.html',
+                    {'erro': erro}
+                )
 
-        # Redireciona sempre para a mesma tela de sucesso (evita enumeração de usuários)
-        return redirect('password_reset_done')
+            # Redireciona sempre para a mesma tela de sucesso (evita enumeração de usuários)
+            return redirect('password_reset_done')
 
     return render(request, 'accounts/recuperacao.html', {'erro': erro})
 
