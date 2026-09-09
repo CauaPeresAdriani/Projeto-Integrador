@@ -5,6 +5,7 @@ asgiref==3.12.1
 cffi==2.1.1
 click==8.4.2
 Django==5.2.17
+gunicorn==23.0.0
 django-otp==1.7.0
 filelock==3.32.4
 mysqlclient==2.2.8
