@@ -147,6 +147,19 @@ SESSION_COOKIE_HTTPONLY = True
 # Ajuda a proteger o cookie da sessão contra ataques CSRF.
 SESSION_COOKIE_SAMESITE = 'Lax'
 
+# Segurança HTTPS / TLS
+SECURE_SSL_REDIRECT = True
+
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Cookies só podem ser enviados através de HTTPS.
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://projeto-integrador-production-2d81.up.railway.app',
+]
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
