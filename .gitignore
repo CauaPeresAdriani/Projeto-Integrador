@@ -219,3 +219,4 @@ __marimo__/
 .streamlit/secrets.toml
 run_security_tests.sh
 .security-reports/
+staticfiles/
