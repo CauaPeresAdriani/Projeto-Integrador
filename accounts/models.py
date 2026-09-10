@@ -60,17 +60,103 @@ class AuditLog(models.Model):
 
 
 class Participante(models.Model):
-    nome = models.CharField(max_length=100)
-    cpf = models.CharField(max_length=11, unique=True)
-    data_nascimento = models.DateField()
+    registro_participante = models.CharField(
+        max_length=30,
+        unique=True
+    )
+
+    nome_encrypted = models.TextField()
+
+    cpf_encrypted = models.TextField()
+
+    data_nascimento_encrypted = models.TextField()
 
     ativo = models.BooleanField(default=True)
 
     data_cadastro = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.nome
+        return self.registro_participante
 
+
+
+class Pesquisa(models.Model):
+    registro_pesquisa = models.CharField(
+        max_length=30,
+        unique=True
+    )
+
+    nome = models.CharField(max_length=150)
+
+    descricao = models.TextField(
+        blank=True
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ('planejamento', 'Planejamento'),
+            ('ativa', 'Ativa'),
+            ('encerrada', 'Encerrada'),
+            ('cancelada', 'Cancelada'),
+        ],
+        default='planejamento'
+    )
+
+    data_inicio = models.DateField(
+        null=True,
+        blank=True
+    )
+
+    data_fim = models.DateField(
+        null=True,
+        blank=True
+    )
+
+    def __str__(self):
+        return self.registro_pesquisa
+
+
+class ParticipacaoPesquisa(models.Model):
+    participante = models.ForeignKey(
+        Participante,
+        on_delete=models.CASCADE,
+        related_name='participacoes_pesquisa'
+    )
+
+    pesquisa = models.ForeignKey(
+        Pesquisa,
+        on_delete=models.CASCADE,
+        related_name='participantes'
+    )
+
+    data_entrada = models.DateField(
+        auto_now_add=True
+    )
+
+    data_saida = models.DateField(
+        null=True,
+        blank=True
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ('ativo', 'Ativo'),
+            ('concluido', 'Concluído'),
+            ('retirado', 'Retirado'),
+        ],
+        default='ativo'
+    )
+
+    def __str__(self):
+        return (
+            f"{self.participante.registro_participante} - "
+            f"{self.pesquisa.registro_pesquisa}"
+        )
+
+
+    
 
 class Consentimento(models.Model):
     participante = models.ForeignKey(
@@ -102,9 +188,9 @@ class Consentimento(models.Model):
 
     def __str__(self):
         return (
-            f"Consentimento de {self.participante.nome} "
-            f"- versão {self.versao}"
-        )
+        f"Consentimento de {self.participante.registro_participante} "
+        f"- versão {self.versao}"
+    )
 
 
 class Documento(models.Model):
@@ -143,8 +229,8 @@ class Documento(models.Model):
     def __str__(self):
         return (
             f"{self.nome_original} - "
-            f"{self.participante.nome}"
-        )
+            f"{self.participante.registro_participante}"
+    )
 
 
 class Acesso(models.Model):
