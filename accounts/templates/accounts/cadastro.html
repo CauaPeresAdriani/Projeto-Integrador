@@ -1,79 +1,238 @@
+```html
 {% extends 'accounts/base.html' %}
+
 {% load static %}
 
 {% block title %}Cadastro - Projeto Integrador{% endblock %}
 
 {% block content %}
+
 <header class="header">
+
     <div class="profile">
+
         <img src="{% static 'img/Profile.webp' %}" alt="ClinSecure Logo">
+
         <h2>ClinSecure</h2>
+
     </div>
+
     <nav>
+
         <a href="{% url 'home' %}">Início</a>
+
         <a href="{% url 'cadastro' %}">Cadastro</a>
+
         <a href="{% url 'login' %}">Login</a>
+
         <a href="{% url 'password_reset' %}">Esqueci a senha</a>
+
     </nav>
+
 </header>
+
 <body>
 
 <div class="login-container">
+
     <div class="card shadow p-4 login-card">
-        
+
         <h2 class="login-title">Cadastro ClinSecure</h2>
 
-        <form  method="POST">
-            {% csrf_token %} 
-            
+        <form method="POST">
+
+            {% csrf_token %}
+
+            <!-- Nome completo do participante -->
             <div class="form-group">
-                <label for="username" class="labels">Usuário:</label>
-                <input type="text" name="username" id="username" class="inputs" required>
+
+                <label for="nome" class="labels">
+                    Nome completo:
+                </label>
+
+                <input
+                    type="text"
+                    name="nome"
+                    id="nome"
+                    class="inputs"
+                    required
+                >
+
             </div>
 
+            <!-- Nome de usuário utilizado para acessar o sistema -->
             <div class="form-group">
-                <label for="password" class="labels">Senha:</label>
-                <input type="password" name="password" id="password" class="inputs" required>
+
+                <label for="username" class="labels">
+                    Usuário:
+                </label>
+
+                <input
+                    type="text"
+                    name="username"
+                    id="username"
+                    class="inputs"
+                    required
+                >
+
             </div>
 
+            <!-- Senha da conta -->
             <div class="form-group">
-                <label for="email" class="labels">Email:</label>
-                <input type="email" name="email" id="email" class="inputs" required>
+
+                <label for="password" class="labels">
+                    Senha:
+                </label>
+
+                <input
+                    type="password"
+                    name="password"
+                    id="password"
+                    class="inputs"
+                    required
+                >
+
             </div>
 
+            <!-- E-mail do usuário -->
             <div class="form-group">
-                <label for="cpf" class="labels">CPF:</label>
-                <input type="text" name="cpf" id="cpf" class="inputs" maxlength="11" required>
+
+                <label for="email" class="labels">
+                    Email:
+                </label>
+
+                <input
+                    type="email"
+                    name="email"
+                    id="email"
+                    class="inputs"
+                    required
+                >
+
             </div>
 
+            <!-- CPF do participante -->
             <div class="form-group">
-                <label for="perfil" class="labels">Perfil:</label>
-                <select name="perfil" id="perfil" class="inputs" required>
-                    <option value="responsavel">Responsável</option>
-                    <option value="pesquisador">Pesquisador</option>
-                    <option value="administrador">Administrador</option>
-                    <option value="coordenador">Coordenador</option>
+
+                <label for="cpf" class="labels">
+                    CPF:
+                </label>
+
+                <input
+                    type="text"
+                    name="cpf"
+                    id="cpf"
+                    class="inputs"
+                    maxlength="11"
+                    required
+                >
+
+            </div>
+
+            <!-- Data de nascimento do participante -->
+            <div class="form-group">
+
+                <label for="data_nascimento" class="labels">
+                    Data de nascimento:
+                </label>
+
+                <input
+                    type="date"
+                    name="data_nascimento"
+                    id="data_nascimento"
+                    class="inputs"
+                    required
+                >
+
+            </div>
+
+            <!-- Perfil do usuário no sistema -->
+            <div class="form-group">
+
+                <label for="perfil" class="labels">
+                    Perfil:
+                </label>
+
+                <select
+                    name="perfil"
+                    id="perfil"
+                    class="inputs"
+                    required
+                >
+
+                    <option value="responsavel">
+                        Responsável
+                    </option>
+
+                    <option value="pesquisador">
+                        Pesquisador
+                    </option>
+
+                    <option value="administrador">
+                        Administrador
+                    </option>
+
+                    <option value="coordenador">
+                        Coordenador
+                    </option>
+
                 </select>
+
             </div>
 
+            <!-- Consentimento explícito para utilização dos dados -->
+            <div class="form-group">
 
+                <label>
 
-            <button type="submit" class="btn-submit">Cadastrar</button>
+                    <input
+                        type="checkbox"
+                        name="consentimento"
+                        id="consentimento"
+                        required
+                    >
 
-            <div class="form-links" style="justify-content: center;">
-                <a href="{% url 'login' %}">Já tem conta? Faça login</a>
+                    Li e concordo com o uso dos meus dados pessoais
+                    para gerenciamento e participação em pesquisas clínicas.
+
+                </label>
+
             </div>
+
+            <!-- Botão para enviar o cadastro -->
+            <button type="submit" class="btn-submit">
+                Cadastrar
+            </button>
+
+            <div
+                class="form-links"
+                style="justify-content: center;"
+            >
+
+                <a href="{% url 'login' %}">
+                    Já tem conta? Faça login
+                </a>
+
+            </div>
+
         </form>
 
+        <!-- Exibe mensagens de erro do cadastro -->
         {% if erro %}
+
             <div class="alert-error" role="alert">
+
                 {{ erro }}
+
             </div>
+
         {% endif %}
 
     </div>
+
 </div>
 
 </body>
 
 {% endblock %}
+```

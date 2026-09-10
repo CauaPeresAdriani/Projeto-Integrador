@@ -60,17 +60,24 @@ class AuditLog(models.Model):
 
 
 class Participante(models.Model):
+
+    # Liga o participante ao usuário que é o titular dos dados
+    usuario = models.OneToOneField(
+        Usuario,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='participante'
+    )
+
     nome = models.CharField(max_length=100)
     cpf = models.CharField(max_length=11, unique=True)
     data_nascimento = models.DateField()
-
     ativo = models.BooleanField(default=True)
-
     data_cadastro = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.nome
-
 
 class Consentimento(models.Model):
     participante = models.ForeignKey(

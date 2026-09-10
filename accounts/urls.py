@@ -7,7 +7,8 @@ from accounts.views import (
     recuperacao_view,
     confirmar_recuperacao_senha_view,
 )
-
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
 
 ## passando caminhos para as views e html correspondentes
 urlpatterns = [
@@ -15,6 +16,7 @@ urlpatterns = [
     path('login/', views.meu_login_view, name='login'),
     path('setup_2fa/', views.meu_setup_2fa_view, name='setup_2fa'),
     path('cadastro/', views.cadastro_view, name='cadastro'),
+    path('revogar-consentimento/',views.revogar_consentimento_view,name='revogar_consentimento'),
     path('verificar_2fa/', views.verificar_2fa_view, name='verificar_2fa'),
     path('logout/', views.meu_logout_view, name='logout'),
     path('home/', views.home_view, name='home'),

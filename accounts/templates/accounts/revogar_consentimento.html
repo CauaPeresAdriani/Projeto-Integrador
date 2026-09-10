@@ -1,0 +1,90 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Revogar Consentimento - ClinSecure</title>
+
+    <link rel="stylesheet" href="{% static 'accounts/css/style.css' %}">
+</head>
+
+<body>
+
+    <h1>Meu Consentimento</h1>
+
+    {% if erro %}
+        <p>{{ erro }}</p>
+    {% endif %}
+
+    {% if sucesso %}
+        <p>{{ sucesso }}</p>
+    {% endif %}
+
+    {% if consentimento %}
+
+        <p>
+            <strong>Finalidade:</strong>
+            {{ consentimento.finalidade }}
+        </p>
+
+        <p>
+            <strong>Versão:</strong>
+            {{ consentimento.versao }}
+        </p>
+
+        <p>
+            <strong>Data do consentimento:</strong>
+            {{ consentimento.data_consentimento }}
+        </p>
+
+        {% if consentimento.revogado %}
+
+            <p>
+                <strong>Status:</strong>
+                Consentimento já revogado.
+            </p>
+
+            <p>
+                <strong>Data da revogação:</strong>
+                {{ consentimento.data_revogado }}
+            </p>
+
+        {% else %}
+
+            <p>
+                <strong>Status:</strong>
+                Consentimento ativo.
+            </p>
+
+            <p>
+                Ao revogar o consentimento, você estará retirando
+                sua autorização para a finalidade informada acima.
+            </p>
+
+            <form method="POST">
+
+                {% csrf_token %}
+
+                <button type="submit">
+                    Revogar consentimento
+                </button>
+
+            </form>
+
+        {% endif %}
+
+    {% endif %}
+
+    <br>
+
+    <a href="{% url 'home' %}">
+        Voltar para o início
+    </a>
+
+</body>
+
+</html>

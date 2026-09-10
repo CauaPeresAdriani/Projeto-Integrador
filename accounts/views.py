@@ -18,6 +18,8 @@ from django.core.mail import send_mail
 from django.urls import reverse
 from django.db.models import Q
 import os
+from accounts.models import Usuario, AuditLog, Participante, Consentimento
+
 
 
 ## LOGICA DE LOGIN ##
@@ -150,36 +152,105 @@ def meu_login_view(request):
     )
 
 ## LOGICA DE CADASTRO ##
+
 def cadastro_view(request):
+
     ## Instanciando variavel erro como none
     erro = None
-    ## se o metodo for post, ou seja, se o usuario clicou no botao de cadastro
+
+    ## Se o metodo for POST
     if request.method == 'POST':
-    ## capturando os valores digitados pelo usuario no html
+
+        ## Capturando os dados enviados pelo formulario
+        nome = request.POST.get('nome', '').strip()
         username = request.POST.get('username', '').strip()
         email = request.POST.get('email', '').strip()
         cpf = request.POST.get('cpf', '').strip()
+        data_nascimento = request.POST.get('data_nascimento', '')
         password = request.POST.get('password', '')
         perfil = request.POST.get('perfil', '').strip()
-    ## verificando se todos os campos obrigatorios foram preenchidos     
-        if not username or not email or not cpf or not password:
-            erro = "Por favor, preencha todos os campos obrigatórios."
-            return render(request, 'accounts/cadastro.html', {'erro': erro})
-    ## verificando se o nome de usuario e valido       
+
+        ## Verifica se o usuario marcou o consentimento
+        consentimento = request.POST.get('consentimento')
+
+        ## Verificando se todos os campos obrigatorios foram preenchidos
+        if (
+            not nome
+            or not username
+            or not email
+            or not cpf
+            or not data_nascimento
+            or not password
+            or not perfil
+        ):
+            erro = "Por favor, preencha todos os campos obrigatorios."
+
+            return render(
+                request,
+                'accounts/cadastro.html',
+                {'erro': erro}
+            )
+
+        ## Verifica se o usuario aceitou o consentimento
+        if not consentimento:
+            erro = "E necessario aceitar o consentimento para realizar o cadastro."
+
+            return render(
+                request,
+                'accounts/cadastro.html',
+                {'erro': erro}
+            )
+
+
+
+
+        ## Verificando se o nome de usuario e valido
         if not re.match(r'^[a-zA-Z0-9_]+$', username):
-            erro = "O nome de usuário não pode ser um e-mail. Use apenas letras, números e underline (_), sem espaços."
-            return render(request, 'accounts/cadastro.html', {'erro': erro})
-    ## verificando se o username e valido
-        elif Usuario.objects.filter(username=username).exists(): 
-           erro = "Esse nome de usuário já está em uso. Escolha outro."
-           return render(request, 'accounts/cadastro.html', {'erro': erro})
-    ## verificando se o cpf e valido
+            erro = (
+                "O nome de usuario nao pode ser um e-mail. "
+                "Use apenas letras, numeros e underline (_), sem espacos."
+            )
+
+            return render(
+                request,
+                'accounts/cadastro.html',
+                {'erro': erro}
+            )
+
+        ## Verificando se o username ja existe
+        elif Usuario.objects.filter(username=username).exists():
+            erro = "Esse nome de usuario ja esta em uso. Escolha outro."
+
+            return render(
+                request,
+                'accounts/cadastro.html',
+                {'erro': erro}
+            )
+
+        ## Verificando se o CPF ja existe
         elif Usuario.objects.filter(cpf=cpf).exists():
-            erro = "Este CPF já está cadastrado no sistema."
-            return render(request, 'accounts/cadastro.html', {'erro': erro})
-    ## se nao tiver erro
+            erro = "Este CPF ja esta cadastrado no sistema."
+
+            return render(
+                request,
+                'accounts/cadastro.html',
+                {'erro': erro}
+            )
+
+        ## Verificando se o CPF ja existe entre os participantes
+        elif Participante.objects.filter(cpf=cpf).exists():
+            erro = "Este CPF ja esta cadastrado no sistema."
+
+            return render(
+                request,
+                'accounts/cadastro.html',
+                {'erro': erro}
+            )
+
+        ## Se nao tiver erro
         if not erro:
-    ## criando o usuario com os dados digitados pelo usuario no html 
+
+            ## Criando o usuario
             usuario = Usuario.objects.create_user(
                 username=username,
                 email=email,
@@ -187,17 +258,140 @@ def cadastro_view(request):
                 cpf=cpf,
                 perfil=perfil
             )
-            ## criando dispositivo para 2fa e setando como nao confirmado
-            device, created = TOTPDevice.objects.get_or_create(
-            user=usuario,
-            name="Celular Principal",
-            defaults={
-            'confirmed': False
-            }
+
+            ## Criando o participante ligado ao usuario
+            participante = Participante.objects.create(
+                usuario=usuario,
+                nome=nome,
+                cpf=cpf,
+                data_nascimento=data_nascimento
             )
+
+            ## Finalidade do consentimento
+            finalidade = (
+                "Gerenciamento e participacao em pesquisas clinicas"
+            )
+
+            ## Versao atual do consentimento
+            versao = "1.0"
+
+            ## Registrando o consentimento
+            Consentimento.objects.create(
+                participante=participante,
+                registrado_por=usuario,
+                finalidade=finalidade,
+                versao=versao
+            )
+
+            ## Registrando o consentimento no historico de auditoria
+            AuditLog.objects.create(
+                usuario=usuario,
+                evento="Consentimento registrado",
+                ip=request.META.get('REMOTE_ADDR'),
+                resultado="Sucesso",
+                detalhes=(
+                    "Consentimento LGPD registrado durante o cadastro. "
+                    f"Finalidade: {finalidade}. "
+                    f"Versao: {versao}."
+                )
+            )
+
+            ## Criando dispositivo para 2FA
+            device, created = TOTPDevice.objects.get_or_create(
+                user=usuario,
+                name="Celular Principal",
+                defaults={
+                    'confirmed': False
+                }
+            )
+
+            ## Depois do cadastro, vai para o login
             return redirect('login')
-        
-    return render(request, 'accounts/cadastro.html', {'erro': erro})
+
+    return render(
+        request,
+        'accounts/cadastro.html',
+        {'erro': erro}
+    )
+
+## LOGICA PARA REVOGAR O CONSENTIMENTO ##
+
+@login_required
+def revogar_consentimento_view(request):
+
+    ## Busca o participante ligado ao usuario logado
+    participante = getattr(request.user, 'participante', None)
+
+    ## Se o usuario nao tiver participante, mostra erro
+    if not participante:
+        return render(
+            request,
+            'accounts/revogar_consentimento.html',
+            {
+                'erro': 'Nao foi encontrado um cadastro de participante para este usuario.'
+            }
+        )
+
+    ## Busca o consentimento mais recente do usuario
+    consentimento = (
+        participante.consentimentos
+        .order_by('-data_consentimento')
+        .first()
+    )
+
+    ## Se nao existir consentimento
+    if not consentimento:
+        return render(
+            request,
+            'accounts/revogar_consentimento.html',
+            {
+                'erro': 'Nenhum consentimento foi encontrado.'
+            }
+        )
+
+    ## Se o formulario foi enviado
+    if request.method == 'POST':
+
+        ## Marca o consentimento como revogado
+        consentimento.revogado = True
+
+        ## Registra a data e hora da revogacao
+        consentimento.data_revogado = timezone.now()
+
+        ## Salva as alteracoes
+        consentimento.save()
+
+        ## Registra a revogacao no historico de auditoria
+        AuditLog.objects.create(
+            usuario=request.user,
+            evento="Consentimento revogado",
+            ip=request.META.get('REMOTE_ADDR'),
+            resultado="Sucesso",
+            detalhes=(
+                "O titular revogou o consentimento. "
+                f"Finalidade: {consentimento.finalidade}. "
+                f"Versao: {consentimento.versao}."
+            )
+        )
+
+        ## Mostra mensagem de sucesso
+        return render(
+            request,
+            'accounts/revogar_consentimento.html',
+            {
+                'sucesso': 'Seu consentimento foi revogado com sucesso.',
+                'consentimento': consentimento
+            }
+        )
+
+    ## Mostra o consentimento atual
+    return render(
+        request,
+        'accounts/revogar_consentimento.html',
+        {
+            'consentimento': consentimento
+        }
+    )
 
 ## LOGICA DE 2FA ##
 def meu_setup_2fa_view(request):
