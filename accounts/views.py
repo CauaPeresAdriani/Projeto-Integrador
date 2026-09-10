@@ -15,6 +15,7 @@ from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
+import requests
 from django.urls import reverse
 from django.db.models import Q
 import os
@@ -407,59 +408,120 @@ def meu_logout_view(request):
 ## LOGICA DE RECUPERAÇÃO DE SENHA ##
 def recuperacao_view(request):
     erro = None
+
     if request.method == 'POST':
+
         # Captura o valor que pode ser tanto username quanto email
         identificador = request.POST.get('identificador', '').strip()
-        
-        if not identificador:
-            return render(request, 'accounts/recuperacao.html', {'erro': 'Preencha o campo.'})
 
-        # Requisito 2.1: Busca o usuário usando Q (Email OU Username)
+        if not identificador:
+            return render(
+                request,
+                'accounts/recuperacao.html',
+                {'erro': 'Preencha o campo.'}
+            )
+
+        # Requisito 2.1: Busca o usuário usando Email OU Username
         usuario = Usuario.objects.filter(
             Q(email=identificador) | Q(username=identificador)
         ).first()
 
-        
         if usuario:
-             # Registra que o usuário solicitou recuperação de senha.
+
+            # Registra que o usuário solicitou recuperação de senha
             AuditLog.objects.create(
-        usuario=usuario,
-        evento="Solicitação de recuperação de senha",
-        ip=request.META.get('REMOTE_ADDR'),
-        resultado="Sucesso",
-        detalhes="Usuário solicitou o envio de um link para recuperação de senha."
-    )
+                usuario=usuario,
+                evento="Solicitação de recuperação de senha",
+                ip=request.META.get('REMOTE_ADDR'),
+                resultado="Sucesso",
+                detalhes="Usuário solicitou o envio de um link para recuperação de senha."
+            )
+
             # Requisito 2.2: Gera o token criptográfico
             uid = urlsafe_base64_encode(force_bytes(usuario.pk))
             token = default_token_generator.make_token(usuario)
 
             # Monta o link absoluto que irá no corpo do e-mail
             link = request.build_absolute_uri(
-                reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
+                reverse(
+                    'password_reset_confirm',
+                    kwargs={
+                        'uidb64': uid,
+                        'token': token
+                    }
+                )
             )
 
-            # Envia o e-mail real
+            # Envia o e-mail através da API do Brevo
             try:
-                send_mail(
-                    subject='ClinSecure - Recuperação de Senha',
-                    message=f'Olá, {usuario.username}.\n\nVocê solicitou a redefinição de senha. Clique no link abaixo para criar uma nova credencial:\n{link}\n\nSe não foi você, ignore este e-mail.',
-                    from_email=os.getenv('EMAIL_HOST_USER'),
-                    recipient_list=[usuario.email],
-                    fail_silently=False,
-            )
+
+                resposta = requests.post(
+                    'https://api.brevo.com/v3/smtp/email',
+
+                    headers={
+                        'accept': 'application/json',
+                        'api-key': os.getenv('BREVO_API_KEY'),
+                        'content-type': 'application/json',
+                    },
+
+                    json={
+                        'sender': {
+                            'name': os.getenv('BREVO_SENDER_NAME'),
+                            'email': os.getenv('BREVO_SENDER_EMAIL'),
+                        },
+
+                        'to': [
+                            {
+                                'email': usuario.email,
+                                'name': usuario.username,
+                            }
+                        ],
+
+                        'subject': 'ClinSecure - Recuperação de Senha',
+
+                        'textContent': (
+                            f'Olá, {usuario.username}.\n\n'
+                            'Você solicitou a redefinição de senha.\n\n'
+                            'Clique no link abaixo para criar uma nova senha:\n'
+                            f'{link}\n\n'
+                            'Se não foi você, ignore este e-mail.'
+                        ),
+                    },
+
+                    timeout=10,
+                )
+
+                # Gera exceção caso o Brevo retorne erro HTTP
+                resposta.raise_for_status()
+
             except Exception as e:
-                print(f"ERRO SMTP: {type(e).__name__}: {e}")
-                erro = 'Não foi possível enviar o e-mail de recuperação. Tente novamente mais tarde.'
+
+                print(
+                    f"ERRO BREVO API: {type(e).__name__}: {e}"
+                )
+
+                erro = (
+                    'Não foi possível enviar o e-mail de recuperação. '
+                    'Tente novamente mais tarde.'
+                )
+
                 return render(
                     request,
                     'accounts/recuperacao.html',
                     {'erro': erro}
                 )
 
-            # Redireciona sempre para a mesma tela de sucesso (evita enumeração de usuários)
+            # Redireciona para a tela de sucesso
+            # Evita enumeração de usuários
             return redirect('password_reset_done')
 
-    return render(request, 'accounts/recuperacao.html', {'erro': erro})
+    return render(
+        request,
+        'accounts/recuperacao.html',
+        {'erro': erro}
+    )
+
+
 
 def confirmar_recuperacao_senha_view(request, uidb64, token):
 
