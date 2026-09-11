@@ -1,16 +1,98 @@
-<!DOCTYPE html>
-<html "pt-br">
-<head>
-    <meta charset="UTF-8">
-    <title>Home</title>
-</head>
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}Cadastro - Projeto Integrador{% endblock %}
+
+{% block content %}
 <body>
-    <p>Bem-vindo, {{ request.user.username }}!</p>
-   <form action="{% url 'logout' %}" method="POST" style="display: inline;">
-    {% csrf_token %}
-    <button type="submit" style="background: none; border: none; color: inherit; text-decoration: underline; cursor: pointer; padding: 0;">
-        Sair do Sistema
-    </button>
-</form>
+
+<header class="header">
+
+    <div class="profile">
+        <h2>ClinSecure</h2>
+    </div>
+
+    <nav>
+        <a href="{% url 'home' %}">Dashboard</a>
+        <a href="{% url 'cadastro' %}">Usuários</a>
+        <a href="{% url 'cadastro_participante' %}">
+            Participantes
+        </a>
+        <a href="{% url 'upload_documento' %}">
+            Documentos
+        </a>
+        <a href="{% url 'logout' %}">
+            Sair
+        </a>
+    </nav>
+
+</header>
+
+
+<main style="
+    min-height: 100vh;
+    padding: 120px 40px 40px;
+">
+
+    <div class="top-text">
+        <h2>Dashboard</h2>
+        <p style="color: var(--text-muted);">
+            Acesso rápido às funcionalidades do ClinSecure
+        </p>
+    </div>
+
+
+    <section style="
+        max-width: 1000px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
+    ">
+
+        <a href="{% url 'cadastro' %}">
+            <div class="card">
+                <h2>Usuários</h2>
+                <p>
+                    Cadastrar e gerenciar usuários do sistema.
+                </p>
+            </div>
+        </a>
+
+
+        <a href="{% url 'cadastro_participante' %}">
+            <div class="card">
+                <h2>Participantes</h2>
+                <p>
+                    Cadastrar participantes de pesquisas clínicas.
+                </p>
+            </div>
+        </a>
+
+
+        <a href="{% url 'upload_documento' %}">
+            <div class="card">
+                <h2>Documentos</h2>
+                <p>
+                    Enviar documentos protegidos dos participantes.
+                </p>
+            </div>
+        </a>
+
+
+        <a href="{% url 'password_reset' %}">
+            <div class="card">
+                <h2>Recuperar senha</h2>
+                <p>
+                    Recuperar o acesso à conta.
+                </p>
+            </div>
+        </a>
+
+    </section>
+
+</main>
+
 </body>
-</html>
+
+{% endblock %}
