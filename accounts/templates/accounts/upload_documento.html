@@ -1,0 +1,53 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}Cadastro - Projeto Integrador{% endblock %}
+
+{% block content %}
+<body>
+
+    <h1>Upload de documento</h1>
+
+    {% if erro %}
+        <p>{{ erro }}</p>
+    {% endif %}
+
+    <form method="POST" enctype="multipart/form-data">
+
+        {% csrf_token %}
+
+        <label for="participante">Participante:</label>
+
+        <select name="participante" id="participante" required>
+
+            <option value="">Selecione</option>
+
+            {% for participante in participantes %}
+                <option value="{{ participante.id }}">
+                    {{ participante.registro_participante }}
+                </option>
+            {% endfor %}
+
+        </select>
+
+        <br><br>
+
+        <label for="arquivo">Documento:</label>
+
+        <input
+            type="file"
+            name="arquivo"
+            id="arquivo"
+            required
+        >
+
+        <br><br>
+
+        <button type="submit">
+            Enviar documento
+        </button>
+
+    </form>
+
+</body>
+{% endblock %}

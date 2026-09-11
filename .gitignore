@@ -220,3 +220,6 @@ __marimo__/
 run_security_tests.sh
 .security-reports/
 staticfiles/
+
+media/
+documentos_criptografados/

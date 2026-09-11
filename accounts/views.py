@@ -18,8 +18,9 @@ from django.core.mail import send_mail
 import requests
 from django.urls import reverse
 from django.db.models import Q
+from accounts.crypto import encrypt_data, decrypt_data, encrypt_file
 import os
-
+from .models import Usuario, Participante, AuditLog, Documento
 
 ## LOGICA DE LOGIN ##
 
@@ -159,11 +160,10 @@ def cadastro_view(request):
     ## capturando os valores digitados pelo usuario no html
         username = request.POST.get('username', '').strip()
         email = request.POST.get('email', '').strip()
-        cpf = request.POST.get('cpf', '').strip()
         password = request.POST.get('password', '')
         perfil = request.POST.get('perfil', '').strip()
     ## verificando se todos os campos obrigatorios foram preenchidos     
-        if not username or not email or not cpf or not password:
+        if not username or not email or not password:
             erro = "Por favor, preencha todos os campos obrigatórios."
             return render(request, 'accounts/cadastro.html', {'erro': erro})
     ## verificando se o nome de usuario e valido       
@@ -174,10 +174,6 @@ def cadastro_view(request):
         elif Usuario.objects.filter(username=username).exists(): 
            erro = "Esse nome de usuário já está em uso. Escolha outro."
            return render(request, 'accounts/cadastro.html', {'erro': erro})
-    ## verificando se o cpf e valido
-        elif Usuario.objects.filter(cpf=cpf).exists():
-            erro = "Este CPF já está cadastrado no sistema."
-            return render(request, 'accounts/cadastro.html', {'erro': erro})
     ## se nao tiver erro
         if not erro:
     ## criando o usuario com os dados digitados pelo usuario no html 
@@ -185,7 +181,6 @@ def cadastro_view(request):
                 username=username,
                 email=email,
                 password=password,
-                cpf=cpf,
                 perfil=perfil
             )
             ## criando dispositivo para 2fa e setando como nao confirmado
@@ -239,7 +234,7 @@ def cadastro_participante_view(request):
             detalhes=f"Participante {participante.registro_participante} cadastrado com dados pessoais criptografados."
         )
 
-        return redirect('login')
+        return redirect('cadastro_participante')
 
     return render(request, 'accounts/cadastro_participante.html', {'erro': erro})
 
@@ -685,4 +680,38 @@ def confirmar_recuperacao_senha_view(request, uidb64, token):
         }
     )
 
+def upload_documento_view(request):
 
+    if request.method == 'POST':
+
+        participante_id = request.POST.get('participante')
+        arquivo_original =  request.FILES.get('arquivo')
+
+        if not participante_id or not arquivo_original:
+            return render(
+                request,
+                'accounts/upload_documento.html',
+                {'erro': 'Selecione o participante e o arquivo.'}
+            )
+
+        participante = Participante.objects.get(id=participante_id)
+
+        arquivo = encrypt_file(arquivo_original)
+
+        Documento.objects.create(
+            participante=participante,
+            responsavel=request.user,
+            nome_original=arquivo_original.name,
+            arquivo_criptografado=arquivo,
+            status='pendente'
+        )
+
+        return redirect('upload_documento')
+
+    participantes = Participante.objects.filter(ativo=True)
+
+    return render(
+        request,
+        'accounts/upload_documento.html',
+        {'participantes': participantes}
+    )

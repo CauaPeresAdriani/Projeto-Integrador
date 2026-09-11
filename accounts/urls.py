@@ -44,4 +44,11 @@ path(
 
 path(
     'cadastro_participante/', views.cadastro_participante_view, name='cadastro_participante' ),
-]     
+    
+
+path(
+    'upload_documento/',
+    views.upload_documento_view,
+    name='upload_documento'
+),
+]

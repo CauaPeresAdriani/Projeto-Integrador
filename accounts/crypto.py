@@ -3,10 +3,7 @@ from django.conf import settings
 
 
 def encrypt_data(data):
-    """
-    Criptografa um dado utilizando a chave protegida
-    configurada nas variáveis de ambiente.
-    """
+
 
     if data is None:
         return None
@@ -19,10 +16,7 @@ def encrypt_data(data):
 
 
 def decrypt_data(encrypted_data):
-    """
-    Descriptografa um dado utilizando a chave protegida
-    configurada nas variáveis de ambiente.
-    """
+
 
     if encrypted_data is None:
         return None
@@ -34,3 +28,39 @@ def decrypt_data(encrypted_data):
     )
 
     return decrypted_data.decode("utf-8")
+
+
+from io import BytesIO
+from django.core.files.base import ContentFile
+
+
+def encrypt_file(file):
+
+    if file is None:
+        return None
+
+    fernet = Fernet(settings.FIELD_ENCRYPTION_KEY)
+
+    conteudo = file.read()
+
+    conteudo_criptografado = fernet.encrypt(conteudo)
+
+    return ContentFile(
+        conteudo_criptografado,
+        name=file.name
+    )
+
+
+def decrypt_file(file):
+
+
+    if file is None:
+        return None
+
+    fernet = Fernet(settings.FIELD_ENCRYPTION_KEY)
+
+    conteudo = file.read()
+
+    conteudo_descriptografado = fernet.decrypt(conteudo)
+
+    return BytesIO(conteudo_descriptografado)
