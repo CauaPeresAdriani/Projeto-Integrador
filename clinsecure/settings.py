@@ -131,33 +131,33 @@ PASSWORD_HASHERS = [
 ]
 
 AUTH_USER_MODEL = 'accounts.Usuario'
-
+if not DEBUG:
 # Tempo máximo da sessão: 15 minutos.
-SESSION_COOKIE_AGE = 900
+    SESSION_COOKIE_AGE = 900
 
-# Atualiza o tempo da sessão a cada requisição.
-SESSION_SAVE_EVERY_REQUEST = True
+    # Atualiza o tempo da sessão a cada requisição.
+    SESSION_SAVE_EVERY_REQUEST = True
 
-# Mantém a sessão válida enquanto o navegador estiver aberto.
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+    # Mantém a sessão válida enquanto o navegador estiver aberto.
+    SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
-# Impede JavaScript de acessar o cookie da sessão.
-SESSION_COOKIE_HTTPONLY = True
+    # Impede JavaScript de acessar o cookie da sessão.
+    SESSION_COOKIE_HTTPONLY = True
 
-# Ajuda a proteger o cookie da sessão contra ataques CSRF.
-SESSION_COOKIE_SAMESITE = 'Lax'
+    # Ajuda a proteger o cookie da sessão contra ataques CSRF.
+    SESSION_COOKIE_SAMESITE = 'Lax'
 
 # Segurança HTTPS / TLS
-SECURE_SSL_REDIRECT = True
-SECURE_HSTS_SECONDS = 31536000
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
 
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Cookies só podem ser enviados através de HTTPS.
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 CSRF_TRUSTED_ORIGINS = [
     'https://projeto-integrador-production-2d81.up.railway.app',

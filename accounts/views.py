@@ -7,7 +7,7 @@ from django.http import HttpResponse, request
 from django.shortcuts import redirect, render
 import qrcode
 from django_otp.plugins.otp_totp.models import TOTPDevice
-from accounts.models import Usuario, AuditLog
+from accounts.models import Participante, Usuario, AuditLog
 from datetime import timedelta 
 from django.utils import timezone
 import time
@@ -199,6 +199,51 @@ def cadastro_view(request):
             return redirect('login')
         
     return render(request, 'accounts/cadastro.html', {'erro': erro})
+
+
+
+def cadastro_participante_view(request):
+
+    if request.user.perfil != "responsavel":
+      return HttpResponse("Acesso negado. Apenas usuários com perfil 'responsável' podem cadastrar participantes.", status=403)
+
+    erro = None
+
+    if request.method == 'POST':
+        ## capturando os valores digitados pelo usuario no html
+        nome = request.POST.get('nome', '').strip()
+        data_nascimento = request.POST.get('data_nascimento', '').strip()
+        cpf = request.POST.get('cpf', '').strip()
+        ## verificando se todos os campos foram preenchidos
+        if not nome or not data_nascimento or not cpf:
+            erro = "Por favor, preencha todos os campos obrigatórios."
+            return render(request, 'accounts/cadastro.html', {'erro': erro})
+        ## criando o participante inicialmente para obter o ID
+        participante = Participante.objects.create(
+            registro_participante='TEMP',
+            nome_encrypted=encrypt_data(nome),
+            data_nascimento_encrypted=encrypt_data(data_nascimento),
+            cpf_encrypted=encrypt_data(cpf),
+            ativo=True,
+            usuario=None
+        )
+        ## gerando automaticamente o registro do participante
+        participante.registro_participante = f"PT-{participante.id:06d}"
+        participante.save(update_fields=['registro_participante'])
+        ## registrando o cadastro na auditoria
+        AuditLog.objects.create(
+            usuario=request.user,
+            evento="Cadastro de participante bem-sucedido",
+            ip=request.META.get('REMOTE_ADDR'),
+            resultado="Sucesso",
+            detalhes=f"Participante {participante.registro_participante} cadastrado com dados pessoais criptografados."
+        )
+
+        return redirect('login')
+
+    return render(request, 'accounts/cadastro_participante.html', {'erro': erro})
+
+
 
 ## LOGICA DE 2FA ##
 def meu_setup_2fa_view(request):

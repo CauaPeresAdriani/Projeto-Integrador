@@ -1,0 +1,69 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}Cadastrar participante - ClinSecure{% endblock %}
+
+{% block content %}
+<header class="header">
+    <div class="profile">
+        <img src="{% static 'img/Profile.webp' %}" alt="Logo ClinSecure">
+        <h2>ClinSecure</h2>
+    </div>
+    <nav aria-label="Navegação principal">
+        <a href="{% url 'home' %}">Início</a>
+        <a href="{% url 'logout' %}">Sair</a>
+    </nav>
+</header>
+
+
+<body>
+
+<div class="login-container">
+    <div class="card shadow p-4 login-card">
+        
+        <h2 class="login-title">Cadastro ClinSecure</h2>
+
+        <form  method="POST">
+            {% csrf_token %} 
+            
+            <div class="form-group">
+                <label for="nome" class="labels">Nome completo</label>
+                <input type="text" name="nome" id="nome" class="inputs" autocomplete="name" required>
+            </div>
+
+             <div class="form-group">
+                <label for="cpf" class="labels">CPF</label>
+                <input type="text" name="cpf" id="cpf" class="inputs" inputmode="numeric" maxlength="11" autocomplete="off" placeholder="Somente números" required>
+            </div>
+
+            <div class="form-group">
+                <label for="data_nascimento" class="labels">Data de nascimento</label>
+                <input type="date" name="data_nascimento" id="data_nascimento" class="inputs" autocomplete="bday" required>
+            </div>
+
+            <p class="privacy-note">Os dados pessoais informados serão protegidos antes de serem armazenados.</p>
+            <button type="submit" class="btn-submit">Cadastrar participante</button>
+        
+        </form>
+
+        {% if erro %}
+            <div class="alert-error" role="alert">
+                {{ erro }}
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+
+</body>
+{% endblock %}
+
+
+
+
+
+
+
+
+
+

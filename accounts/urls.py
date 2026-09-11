@@ -42,5 +42,6 @@ path(
     name='password_reset_complete'
 ),
 
-
-]
+path(
+    'cadastro_participante/', views.cadastro_participante_view, name='cadastro_participante' ),
+]     
