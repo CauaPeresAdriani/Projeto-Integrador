@@ -149,7 +149,9 @@ SESSION_COOKIE_SAMESITE = 'Lax'
 
 # Segurança HTTPS / TLS
 SECURE_SSL_REDIRECT = True
-
+SECURE_HSTS_SECONDS = 31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
@@ -172,6 +174,8 @@ USE_I18N = True
 
 USE_TZ = True
 
+
+FIELD_ENCRYPTION_KEY = os.getenv('FIELD_ENCRYPTION_KEY')
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
