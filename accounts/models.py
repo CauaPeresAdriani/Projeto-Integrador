@@ -1,9 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.conf import settings
 
 
 class Usuario(AbstractUser):
-    cpf = models.CharField(max_length=11, unique=True)
 
     perfil = models.CharField(
         max_length=20,
@@ -12,10 +12,11 @@ class Usuario(AbstractUser):
             ('pesquisador', 'Pesquisador'),
             ('administrador', 'Administrador'),
             ('responsavel', 'Responsável'),
+            ('participante', 'Participante'),
         ]
     )
 
-    REQUIRED_FIELDS = ['email', 'cpf', 'perfil']
+    REQUIRED_FIELDS = ['email', 'perfil']
 
     # 2FA
     dois_fatores_ativado = models.BooleanField(default=False)
@@ -74,6 +75,14 @@ class Participante(models.Model):
     ativo = models.BooleanField(default=True)
 
     data_cadastro = models.DateTimeField(auto_now_add=True)
+
+    usuario = models.OneToOneField(
+    settings.AUTH_USER_MODEL,
+    on_delete=models.SET_NULL,
+    null=True,
+    blank=True,
+    related_name="participante"
+)
 
     def __str__(self):
         return self.registro_participante
@@ -148,6 +157,14 @@ class ParticipacaoPesquisa(models.Model):
         ],
         default='ativo'
     )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['participante', 'pesquisa'],
+                name='unique_participante_pesquisa'
+            )
+        ]
 
     def __str__(self):
         return (
