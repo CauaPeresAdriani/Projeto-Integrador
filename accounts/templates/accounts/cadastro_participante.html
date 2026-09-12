@@ -41,6 +41,24 @@
                 <input type="date" name="data_nascimento" id="data_nascimento" class="inputs" autocomplete="bday" required>
             </div>
 
+            <select
+                name="pesquisa"
+                id="pesquisa"
+                required
+            >
+                <option value="">
+                    Selecione uma pesquisa
+                </option>
+
+                {% for pesquisa in pesquisas %}
+                    <option value="{{ pesquisa.id }}">
+                        {{ pesquisa.registro_pesquisa }} -
+                        {{ pesquisa.nome }}
+                    </option>
+                {% endfor %}
+
+            </select>
+
             <p class="privacy-note">Os dados pessoais informados serão protegidos antes de serem armazenados.</p>
             <button type="submit" class="btn-submit">Cadastrar participante</button>
         

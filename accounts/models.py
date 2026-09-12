@@ -122,6 +122,13 @@ class Pesquisa(models.Model):
         blank=True
     )
 
+    responsavel = models.ForeignKey(
+    Usuario,
+    on_delete=models.PROTECT,
+    related_name='pesquisas_responsavel',
+    limit_choices_to={'perfil': 'responsavel'}
+    )
+
     def __str__(self):
         return self.registro_pesquisa
 
@@ -173,7 +180,34 @@ class ParticipacaoPesquisa(models.Model):
         )
 
 
-    
+class DadoPesquisa(models.Model):
+
+    participacao = models.ForeignKey(
+        ParticipacaoPesquisa,
+        on_delete=models.CASCADE,
+        related_name='dados'
+    )
+
+    tipo = models.CharField(
+        max_length=100
+    )
+
+    data_coleta = models.DateField(
+        null=True,
+        blank=True
+    )
+
+    resultado_encrypted = models.TextField()
+
+    data_cadastro = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+        return (
+            f"{self.tipo} - "
+            f"{self.participacao.participante.registro_participante}"
+        )    
 
 class Consentimento(models.Model):
     participante = models.ForeignKey(
