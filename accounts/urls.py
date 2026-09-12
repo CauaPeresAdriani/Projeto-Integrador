@@ -51,4 +51,45 @@ path(
     views.upload_documento_view,
     name='upload_documento'
 ),
+
+path(
+    'pesquisas/',
+    views.lista_pesquisas_view,
+    name='lista_pesquisas'
+),
+
+path(
+    'pesquisas/<int:pesquisa_id>/',
+    views.detalhe_pesquisa_view,
+    name='detalhe_pesquisa'
+),
+
+path(
+    'participantes/<int:participante_id>/',
+    views.detalhe_participante_view,
+    name='detalhe_participante'
+),
+
+path(
+    'participacoes/<int:participacao_id>/dados/novo/',
+    views.cadastrar_dado_pesquisa_view,
+    name='cadastrar_dado_pesquisa'
+),
+
+path(
+    'documentos/<int:documento_id>/download/',
+    views.download_documento_view,
+    name='download_documento'
+),
+path(
+    'documentos/<int:documento_id>/acesso/',
+    views.conceder_acesso_documento_view,
+    name='conceder_acesso_documento'
+),
+
+path(
+    'acessos/<int:acesso_id>/revogar/',
+    views.revogar_acesso_documento_view,
+    name='revogar_acesso_documento'
+),
 ]

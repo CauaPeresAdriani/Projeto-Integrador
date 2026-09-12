@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Participante - ClinSecure</title>
+</head>
+
+<body>
+
+<h1>
+    Participante {{ participante.registro_participante }}
+</h1>
+
+<hr>
+
+<h2>Informações para pesquisa</h2>
+
+<p>
+    <strong>Registro:</strong>
+    {{ participante.registro_participante }}
+</p>
+
+<p>
+    <strong>Faixa etária:</strong>
+    {{ faixa_etaria }}
+</p>
+
+<hr>
+
+<h2>Pesquisas</h2>
+
+{% for participacao in participacoes %}
+
+    <p>
+        <strong>Pesquisa:</strong>
+        <a href="{% url 'detalhe_pesquisa' participacao.pesquisa.id %}">
+            {{ participacao.pesquisa.nome }}
+        </a>
+    </p>
+
+    <p>
+        <strong>Status:</strong>
+        {{ participacao.get_status_display }}
+    </p>
+
+{% empty %}
+
+    <p>Nenhuma pesquisa vinculada.</p>
+
+{% endfor %}
+
+<hr>
+
+<h2>Dados da pesquisa</h2>
+
+{% for dado in dados %}
+
+    <div>
+
+        <h3>{{ dado.tipo }}</h3>
+
+        <p>
+            <strong>Pesquisa:</strong>
+            {{ dado.pesquisa.nome }}
+        </p>
+
+        {% if dado.data_coleta %}
+            <p>
+                <strong>Data da coleta:</strong>
+                {{ dado.data_coleta }}
+            </p>
+        {% endif %}
+
+        <p>
+            <strong>Resultado:</strong>
+            {{ dado.resultado }}
+        </p>
+
+        <hr>
+
+<h2>Documentos</h2>
+
+{% if documentos %}
+
+    {% for documento in documentos %}
+
+        <div>
+            <strong>{{ documento.nome_original }}</strong>
+
+            <a href="{% url 'download_documento' documento.id %}">
+                Baixar
+            </a>
+        </div>
+
+    {% endfor %}
+
+{% else %}
+
+    <p>Nenhum documento cadastrado.</p>
+
+{% endif %}
+
+    </div>
+
+    <hr>
+
+{% empty %}
+
+    <p>
+        Nenhum dado de pesquisa cadastrado.
+    </p>
+
+{% endfor %}
+
+<a href="{% url 'lista_pesquisas' %}">
+    Voltar para pesquisas
+</a>
+<form method="post"
+      action="{% url 'revogar_acesso_documento' 1 %}">
+
+    {% csrf_token %}
+
+    <button type="submit">
+        Revogar acesso
+    </button>
+
+</form>
+</body>
+
+</html>

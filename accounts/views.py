@@ -18,10 +18,24 @@ from django.core.mail import send_mail
 import requests
 from django.urls import reverse
 from django.db.models import Q
-from accounts.crypto import encrypt_data, decrypt_data, encrypt_file
+from accounts.crypto import encrypt_data, decrypt_data, encrypt_file, decrypt_file
 import os
-from .models import Usuario, Participante, AuditLog, Documento
-
+from .models import (
+    Usuario,
+    Participante,
+    AuditLog,
+    Documento,
+    Pesquisa,
+    ParticipacaoPesquisa,
+    Acesso,
+    DadoPesquisa
+)
+from .permissions import (
+    eh_admin_ou_coordenador,
+    usuario_pode_acessar_pesquisa,
+    usuario_pode_acessar_participante,
+    usuario_pode_acessar_documento,
+)
 ## LOGICA DE LOGIN ##
 
 def meu_login_view(request):
@@ -197,23 +211,54 @@ def cadastro_view(request):
 
 
 
+@login_required
 def cadastro_participante_view(request):
 
     if request.user.perfil != "responsavel":
-      return HttpResponse("Acesso negado. Apenas usuários com perfil 'responsável' podem cadastrar participantes.", status=403)
+        return HttpResponse(
+            "Acesso negado. Apenas usuários com perfil 'responsável' podem cadastrar participantes.",
+            status=403
+        )
 
     erro = None
 
+    # O responsável só pode cadastrar participantes
+    # em pesquisas que pertencem a ele.
+    pesquisas = Pesquisa.objects.filter(
+        responsavel=request.user
+    )
+
     if request.method == 'POST':
-        ## capturando os valores digitados pelo usuario no html
+
         nome = request.POST.get('nome', '').strip()
         data_nascimento = request.POST.get('data_nascimento', '').strip()
         cpf = request.POST.get('cpf', '').strip()
-        ## verificando se todos os campos foram preenchidos
-        if not nome or not data_nascimento or not cpf:
-            erro = "Por favor, preencha todos os campos obrigatórios."
-            return render(request, 'accounts/cadastro.html', {'erro': erro})
-        ## criando o participante inicialmente para obter o ID
+        pesquisa_id = request.POST.get('pesquisa')
+
+        if not nome or not data_nascimento or not cpf or not pesquisa_id:
+            erro = "Preencha todos os campos obrigatórios."
+            return render(
+                request,
+                'accounts/cadastro_participante.html',
+                {
+                    'erro': erro,
+                    'pesquisas': pesquisas
+                }
+            )
+
+        # Garante que a pesquisa pertence ao responsável logado.
+        pesquisa = Pesquisa.objects.filter(
+            id=pesquisa_id,
+            responsavel=request.user
+        ).first()
+
+        if not pesquisa:
+            return HttpResponse(
+                "Acesso negado à pesquisa selecionada.",
+                status=403
+            )
+
+        # Cria o participante inicialmente para obter o ID.
         participante = Participante.objects.create(
             registro_participante='TEMP',
             nome_encrypted=encrypt_data(nome),
@@ -222,22 +267,47 @@ def cadastro_participante_view(request):
             ativo=True,
             usuario=None
         )
-        ## gerando automaticamente o registro do participante
-        participante.registro_participante = f"PT-{participante.id:06d}"
-        participante.save(update_fields=['registro_participante'])
-        ## registrando o cadastro na auditoria
+
+        # Gera o registro pseudônimo.
+        participante.registro_participante = (
+            f"PT-{participante.id:06d}"
+        )
+
+        participante.save(
+            update_fields=['registro_participante']
+        )
+
+        # Vincula o participante à pesquisa.
+        ParticipacaoPesquisa.objects.create(
+            participante=participante,
+            pesquisa=pesquisa,
+            status='ativo'
+        )
+
+        # Registra o cadastro na auditoria.
         AuditLog.objects.create(
             usuario=request.user,
             evento="Cadastro de participante bem-sucedido",
             ip=request.META.get('REMOTE_ADDR'),
             resultado="Sucesso",
-            detalhes=f"Participante {participante.registro_participante} cadastrado com dados pessoais criptografados."
+            detalhes=(
+                f"Participante {participante.registro_participante} "
+                f"cadastrado e vinculado à pesquisa "
+                f"{pesquisa.registro_pesquisa}. "
+                f"Dados pessoais criptografados."
+            )
         )
 
         return redirect('cadastro_participante')
 
-    return render(request, 'accounts/cadastro_participante.html', {'erro': erro})
-
+    return render(
+        request,
+        'accounts/cadastro_participante.html',
+        {
+            'erro': erro,
+            'pesquisas': pesquisas
+        }
+    )
 
 
 ## LOGICA DE 2FA ##
@@ -680,38 +750,493 @@ def confirmar_recuperacao_senha_view(request, uidb64, token):
         }
     )
 
+
+@login_required
 def upload_documento_view(request):
 
-    if request.method == 'POST':
+    if request.user.perfil not in [
+        "responsavel",
+        "administrador",
+        "coordenador",
+    ]:
+        return HttpResponse("Acesso negado.", status=403)
 
-        participante_id = request.POST.get('participante')
-        arquivo_original =  request.FILES.get('arquivo')
+    if request.method != "POST":
+        return HttpResponse("Método não permitido.", status=405)
 
-        if not participante_id or not arquivo_original:
-            return render(
-                request,
-                'accounts/upload_documento.html',
-                {'erro': 'Selecione o participante e o arquivo.'}
-            )
+    participante_id = request.POST.get("participante_id")
+    arquivo = request.FILES.get("arquivo")
 
-        participante = Participante.objects.get(id=participante_id)
-
-        arquivo = encrypt_file(arquivo_original)
-
-        Documento.objects.create(
-            participante=participante,
-            responsavel=request.user,
-            nome_original=arquivo_original.name,
-            arquivo_criptografado=arquivo,
-            status='pendente'
+    if not participante_id or not arquivo:
+        return HttpResponse(
+            "Participante e arquivo são obrigatórios.",
+            status=400
         )
 
-        return redirect('upload_documento')
+    try:
+        participante = Participante.objects.get(id=participante_id)
+    except Participante.DoesNotExist:
+        return HttpResponse(
+            "Participante não encontrado.",
+            status=404
+        )
 
-    participantes = Participante.objects.filter(ativo=True)
+    if not usuario_pode_acessar_participante(
+        request.user,
+        participante
+    ):
+        return HttpResponse("Acesso negado.", status=403)
+
+    documento = Documento.objects.create(
+        participante=participante,
+        responsavel=request.user,
+        nome_original=arquivo.name,
+        arquivo_criptografado=encrypt_file(arquivo),
+        status="pendente"
+    )
+
+    AuditLog.objects.create(
+        usuario=request.user,
+        evento="Upload de documento",
+        ip=request.META.get("REMOTE_ADDR"),
+        resultado="Sucesso",
+        detalhes=(
+            f"Documento '{arquivo.name}' enviado para "
+            f"{participante.registro_participante}."
+        )
+    )
+
+    return HttpResponse("Documento enviado com sucesso.")
+
+
+
+@login_required
+def download_documento_view(request, documento_id):
+
+    try:
+        documento = Documento.objects.get(id=documento_id)
+    except Documento.DoesNotExist:
+        return HttpResponse("Documento não encontrado.", status=404)
+
+    if not usuario_pode_acessar_documento(
+        request.user,
+        documento
+    ):
+        return HttpResponse("Acesso negado.", status=403)
+
+    try:
+        documento.arquivo_criptografado.open("rb")
+
+        arquivo = decrypt_file(
+            documento.arquivo_criptografado
+        )
+
+        response = HttpResponse(
+            arquivo.getvalue(),
+            content_type="application/octet-stream"
+        )
+
+        response["Content-Disposition"] = (
+            f'attachment; filename="{documento.nome_original}"'
+        )
+
+        AuditLog.objects.create(
+            usuario=request.user,
+            evento="Download de documento",
+            ip=request.META.get("REMOTE_ADDR"),
+            resultado="Sucesso",
+            detalhes=(
+                f"Documento '{documento.nome_original}' acessado."
+            )
+        )
+
+        return response
+
+    except Exception:
+        return HttpResponse(
+            "Erro ao descriptografar o documento.",
+            status=500
+        )
+
+@login_required
+def conceder_acesso_documento_view(request, documento_id):
+
+    if request.user.perfil not in [
+        "responsavel",
+        "administrador",
+        "coordenador",
+    ]:
+        return HttpResponse("Acesso negado.", status=403)
+
+    try:
+        documento = Documento.objects.get(id=documento_id)
+    except Documento.DoesNotExist:
+        return HttpResponse("Documento não encontrado.", status=404)
+
+    if not usuario_pode_acessar_participante(
+        request.user,
+        documento.participante
+    ):
+        return HttpResponse("Acesso negado.", status=403)
+
+    if request.method != "POST":
+        return HttpResponse("Método não permitido.", status=405)
+
+    usuario_id = request.POST.get("usuario_id")
+    inicio = request.POST.get("inicio_acesso")
+    fim = request.POST.get("fim_acesso")
+
+    if not usuario_id or not inicio or not fim:
+        return HttpResponse(
+            "Usuário, início e fim do acesso são obrigatórios.",
+            status=400
+        )
+
+    try:
+        usuario = Usuario.objects.get(id=usuario_id)
+    except Usuario.DoesNotExist:
+        return HttpResponse("Usuário não encontrado.", status=404)
+
+    Acesso.objects.create(
+        documento=documento,
+        usuario=usuario,
+        concedido_por=request.user,
+        inicio_acesso=inicio,
+        fim_acesso=fim,
+    )
+
+    AuditLog.objects.create(
+        usuario=request.user,
+        evento="Acesso a documento concedido",
+        ip=request.META.get("REMOTE_ADDR"),
+        resultado="Sucesso",
+        detalhes=(
+            f"Acesso ao documento '{documento.nome_original}' "
+            f"concedido para {usuario.username}."
+        )
+    )
+
+    return HttpResponse("Acesso concedido com sucesso.")
+
+
+@login_required
+def revogar_acesso_documento_view(request, acesso_id):
+
+    if request.method != "POST":
+        return HttpResponse(
+            "Método não permitido.",
+            status=405
+        )
+
+    try:
+        acesso = Acesso.objects.select_related(
+            "documento",
+            "documento__participante"
+        ).get(id=acesso_id)
+    except Acesso.DoesNotExist:
+        return HttpResponse(
+            "Acesso não encontrado.",
+            status=404
+        )
+
+    if request.user.perfil not in [
+        "responsavel",
+        "administrador",
+        "coordenador",
+    ]:
+        return HttpResponse(
+            "Acesso negado.",
+            status=403
+        )
+
+    if not usuario_pode_acessar_participante(
+        request.user,
+        acesso.documento.participante
+    ):
+        return HttpResponse(
+            "Acesso negado.",
+            status=403
+        )
+
+    acesso.revogado = True
+    acesso.data_revogado = timezone.now()
+    acesso.save()
+
+    AuditLog.objects.create(
+        usuario=request.user,
+        evento="Acesso a documento revogado",
+        ip=request.META.get("REMOTE_ADDR"),
+        resultado="Sucesso",
+        detalhes=(
+            f"Acesso ao documento "
+            f"'{acesso.documento.nome_original}' revogado."
+        )
+    )
+
+    return HttpResponse(
+        "Acesso revogado com sucesso."
+    )
+
+## LOGICA DE PESQUISAS ##
+
+@login_required
+def lista_pesquisas_view(request):
+
+    usuario = request.user
+
+    if eh_admin_ou_coordenador(usuario):
+        pesquisas = Pesquisa.objects.all()
+
+    elif usuario.perfil == "responsavel":
+        pesquisas = Pesquisa.objects.filter(
+            responsavel=usuario
+        )
+
+    elif usuario.perfil == "participante":
+        pesquisas = Pesquisa.objects.filter(
+            participantes__participante__usuario=usuario
+        ).distinct()
+
+    elif usuario.perfil == "pesquisador":
+        pesquisas = Pesquisa.objects.all()
+
+    else:
+        return HttpResponse("Acesso negado.", status=403)
 
     return render(
         request,
-        'accounts/upload_documento.html',
-        {'participantes': participantes}
+        'accounts/pesquisas.html',
+        {
+            'pesquisas': pesquisas
+        }
+    )
+
+
+@login_required
+def detalhe_pesquisa_view(request, pesquisa_id):
+
+    try:
+        pesquisa = Pesquisa.objects.get(id=pesquisa_id)
+    except Pesquisa.DoesNotExist:
+        return HttpResponse("Pesquisa não encontrada.", status=404)
+
+    if not usuario_pode_acessar_pesquisa(
+        request.user,
+        pesquisa
+    ):
+        return HttpResponse(
+            "Acesso negado a esta pesquisa.",
+            status=403
+        )
+
+    participacoes = ParticipacaoPesquisa.objects.filter(
+        pesquisa=pesquisa
+    ).select_related(
+        'participante'
+    )
+
+    return render(
+        request,
+        'accounts/detalhe_pesquisa.html',
+        {
+            'pesquisa': pesquisa,
+            'participacoes': participacoes,
+        }
+    )
+
+@login_required
+def cadastrar_dado_pesquisa_view(request, participacao_id):
+
+    try:
+        participacao = ParticipacaoPesquisa.objects.select_related(
+            'participante',
+            'pesquisa'
+        ).get(id=participacao_id)
+
+    except ParticipacaoPesquisa.DoesNotExist:
+        return HttpResponse(
+            "Participação não encontrada.",
+            status=404
+        )
+
+    # Verifica se o usuário pode acessar a pesquisa.
+    if not usuario_pode_acessar_pesquisa(
+        request.user,
+        participacao.pesquisa
+    ):
+        return HttpResponse(
+            "Acesso negado.",
+            status=403
+        )
+
+    # Apenas responsáveis, pesquisadores,
+    # administradores e coordenadores podem registrar dados.
+    if request.user.perfil not in [
+        "responsavel",
+        "pesquisador",
+        "administrador",
+        "coordenador",
+    ]:
+        return HttpResponse(
+            "Acesso negado.",
+            status=403
+        )
+
+    erro = None
+
+    if request.method == 'POST':
+
+        tipo = request.POST.get('tipo', '').strip()
+        data_coleta = request.POST.get('data_coleta', '').strip()
+        resultado = request.POST.get('resultado', '').strip()
+
+        if not tipo or not resultado:
+            erro = "Preencha o tipo e o resultado."
+
+        else:
+
+            DadoPesquisa.objects.create(
+                participacao=participacao,
+                tipo=tipo,
+                data_coleta=data_coleta or None,
+                resultado_encrypted=encrypt_data(resultado)
+            )
+
+            AuditLog.objects.create(
+                usuario=request.user,
+                evento="Cadastro de dado de pesquisa",
+                ip=request.META.get('REMOTE_ADDR'),
+                resultado="Sucesso",
+                detalhes=(
+                    f"Dado '{tipo}' cadastrado para "
+                    f"{participacao.participante.registro_participante} "
+                    f"na pesquisa "
+                    f"{participacao.pesquisa.registro_pesquisa}. "
+                    f"Resultado armazenado criptografado."
+                )
+            )
+
+            return redirect(
+                'detalhe_participante',
+                participante_id=participacao.participante.id
+            )
+
+    return render(
+        request,
+        'accounts/cadastrar_dado_pesquisa.html',
+        {
+            'participacao': participacao,
+            'erro': erro,
+        }
+    )
+
+@login_required
+def detalhe_participante_view(request, participante_id):
+
+    try:
+        participante = Participante.objects.get(
+            id=participante_id
+        )
+    except Participante.DoesNotExist:
+        return HttpResponse(
+            "Participante não encontrado.",
+            status=404
+        )
+
+    # Verifica se o usuário pode acessar este participante.
+    if not usuario_pode_acessar_participante(
+        request.user,
+        participante
+    ):
+        return HttpResponse(
+            "Acesso negado a este participante.",
+            status=403
+        )
+
+    # Pesquisas das quais o participante faz parte.
+    participacoes = ParticipacaoPesquisa.objects.filter(
+        participante=participante
+    ).select_related(
+        'pesquisa'
+    )
+
+    # Dados científicos/exames do participante.
+    dados = DadoPesquisa.objects.filter(
+        participacao__participante=participante
+    ).select_related(
+        'participacao',
+        'participacao__pesquisa'
+    ).order_by(
+        '-data_coleta',
+        '-data_cadastro'
+    )
+
+    # Descriptografa a data de nascimento apenas
+    # para calcular a faixa etária.
+    try:
+        data_nascimento = decrypt_data(
+            participante.data_nascimento_encrypted
+        )
+
+        ano_nascimento = int(
+            data_nascimento[:4]
+        )
+
+        hoje = timezone.now().date()
+
+        # Calcula a idade considerando mês/dia.
+        ano, mes, dia = map(
+            int,
+            data_nascimento.split('-')
+        )
+
+        idade = hoje.year - ano
+
+        if (hoje.month, hoje.day) < (mes, dia):
+            idade -= 1
+
+        faixa_inicio = (idade // 10) * 10
+        faixa_fim = faixa_inicio + 9
+
+        faixa_etaria = (
+            f"{faixa_inicio}–{faixa_fim} anos"
+        )
+
+    except Exception:
+        faixa_etaria = "Não disponível"
+
+    # Descriptografa os resultados somente
+    # depois que o usuário foi autorizado.
+    dados_exibicao = []
+
+    for dado in dados:
+
+        try:
+            resultado = decrypt_data(
+                dado.resultado_encrypted
+            )
+        except Exception:
+            resultado = "Resultado indisponível"
+
+        dados_exibicao.append({
+            'tipo': dado.tipo,
+            'data_coleta': dado.data_coleta,
+            'resultado': resultado,
+            'pesquisa': dado.participacao.pesquisa,
+        })
+
+    
+    documentos = Documento.objects.filter(
+        participante=participante
+        )
+    return render(
+        request,
+        'accounts/detalhe_participante.html',
+        {
+            'participante': participante,
+            'participacoes': participacoes,
+            'dados': dados_exibicao,
+            'faixa_etaria': faixa_etaria,
+            'documentos': documentos,
+        }
     )

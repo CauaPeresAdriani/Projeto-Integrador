@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Novo dado - ClinSecure</title>
+</head>
+
+<body>
+
+<h1>Cadastrar dado da pesquisa</h1>
+
+<p>
+    <strong>Participante:</strong>
+    {{ participacao.participante.registro_participante }}
+</p>
+
+<p>
+    <strong>Pesquisa:</strong>
+    {{ participacao.pesquisa.nome }}
+</p>
+
+<hr>
+
+{% if erro %}
+    <p style="color: red;">
+        {{ erro }}
+    </p>
+{% endif %}
+
+<form method="POST">
+
+    {% csrf_token %}
+
+    <label for="tipo">
+        Tipo de exame/dado:
+    </label>
+
+    <br>
+
+    <input
+        type="text"
+        id="tipo"
+        name="tipo"
+        placeholder="Ex.: Sequenciamento genético"
+        required
+    >
+
+    <br><br>
+
+    <label for="data_coleta">
+        Data da coleta:
+    </label>
+
+    <br>
+
+    <input
+        type="date"
+        id="data_coleta"
+        name="data_coleta"
+    >
+
+    <br><br>
+
+    <label for="resultado">
+        Resultado:
+    </label>
+
+    <br>
+
+    <textarea
+        id="resultado"
+        name="resultado"
+        rows="8"
+        cols="60"
+        placeholder="Digite o resultado..."
+        required
+    ></textarea>
+
+    <br><br>
+
+    <button type="submit">
+        Salvar resultado
+    </button>
+
+</form>
+
+<br>
+
+<a href="{% url 'detalhe_participante' participacao.participante.id %}">
+    Voltar para participante
+</a>
+
+</body>
+
+</html>

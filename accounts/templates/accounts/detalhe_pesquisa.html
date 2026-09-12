@@ -1,0 +1,95 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}Detalhe da Pesquisa - Projeto Integrador{% endblock %}
+
+{% block content %}
+<body>
+
+<h1>{{ pesquisa.nome }}</h1>
+
+<p>
+    <strong>Registro:</strong>
+    {{ pesquisa.registro_pesquisa }}
+</p>
+
+<p>
+    <strong>Status:</strong>
+    {{ pesquisa.get_status_display }}
+</p>
+
+<p>
+    <strong>Descrição:</strong>
+    {{ pesquisa.descricao }}
+</p>
+
+<p>
+    <strong>Responsável:</strong>
+    {{ pesquisa.responsavel.username }}
+</p>
+
+{% if pesquisa.data_inicio %}
+<p>
+    <strong>Início:</strong>
+    {{ pesquisa.data_inicio }}
+</p>
+{% endif %}
+
+{% if pesquisa.data_fim %}
+<p>
+    <strong>Fim:</strong>
+    {{ pesquisa.data_fim }}
+</p>
+{% endif %}
+
+<hr>
+
+<h2>Participantes</h2>
+
+{% if participacoes %}
+
+    {% for participacao in participacoes %}
+
+        <div>
+            <a href="{% url 'detalhe_participante' participacao.participante.id %}">
+    {{ participacao.participante.registro_participante }}
+</a>
+
+            <p>
+                <strong>Status:</strong>
+                {{ participacao.get_status_display }}
+            </p>
+
+            <p>
+                <strong>Entrada:</strong>
+                {{ participacao.data_entrada }}
+            </p>
+
+            <a href="{% url 'detalhe_participante' participacao.participante.id %}">
+    {{ participacao.participante.registro_participante }}
+</a>
+
+        <br>
+
+<a href="{% url 'cadastrar_dado_pesquisa' participacao.id %}">
+    + Adicionar dado/exame
+</a>
+
+        </div>
+
+        <hr>
+
+    {% endfor %}
+
+{% else %}
+
+    <p>Nenhum participante vinculado a esta pesquisa.</p>
+
+{% endif %}
+
+<a href="{% url 'lista_pesquisas' %}">
+    Voltar para pesquisas
+</a>
+
+</body>
+{% endblock %}

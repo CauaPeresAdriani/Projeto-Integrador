@@ -1,0 +1,56 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}Login - Projeto Integrador{% endblock %}
+
+{% block content %}
+
+
+<body>
+
+<h1>Pesquisas</h1>
+
+<p>
+    Usuário: {{ request.user.username }}
+</p>
+
+<a href="{% url 'home' %}">Voltar para Home</a>
+
+<hr>
+
+{% if pesquisas %}
+
+    {% for pesquisa in pesquisas %}
+
+        <div>
+            <h2>
+                <a href="{% url 'detalhe_pesquisa' pesquisa.id %}">
+                    {{ pesquisa.nome }}
+                </a>
+            </h2>
+
+            <p>
+                Registro: {{ pesquisa.registro_pesquisa }}
+            </p>
+
+            <p>
+                Status: {{ pesquisa.get_status_display }}
+            </p>
+
+            <p>
+                {{ pesquisa.descricao }}
+            </p>
+
+            <hr>
+        </div>
+
+    {% endfor %}
+
+{% else %}
+
+    <p>Nenhuma pesquisa disponível.</p>
+
+{% endif %}
+
+</body>
+{% endblock %}
