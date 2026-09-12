@@ -76,6 +76,7 @@ class Participante(models.Model):
 
     data_cadastro = models.DateTimeField(auto_now_add=True)
 
+
     usuario = models.OneToOneField(
     settings.AUTH_USER_MODEL,
     on_delete=models.SET_NULL,
