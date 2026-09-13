@@ -1,0 +1,124 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Criar senha - ClinSecure{% endblock %}
+
+{% block content %}
+
+<div class="login-container">
+
+    <div class="card shadow p-4 login-card">
+
+        <h2 class="login-title">
+            Ativar conta
+        </h2>
+
+        <p>
+            Crie uma senha para acessar o ClinSecure.
+        </p>
+
+        {% if erro %}
+            <div class="alert-error" role="alert">
+                {{ erro }}
+            </div>
+        {% endif %}
+
+        <form method="POST">
+
+            {% csrf_token %}
+
+            <div class="form-group">
+
+                <label for="password" class="labels">
+                    Senha
+                </label>
+
+                <div class="password-wrapper">
+
+                    <input
+                        type="password"
+                        name="password"
+                        id="password"
+                        class="inputs"
+                        required
+                    >
+
+                    <button
+                        type="button"
+                        class="password-toggle"
+                        onclick="mostrarSenha('password', this)"
+                    >
+                        Mostrar
+                    </button>
+
+                </div>
+
+            </div>
+
+            <div class="form-group">
+
+                <label for="password_confirm" class="labels">
+                    Confirmar senha
+                </label>
+
+                <div class="password-wrapper">
+
+                    <input
+                        type="password"
+                        name="password_confirm"
+                        id="password_confirm"
+                        class="inputs"
+                        required
+                    >
+
+                    <button
+                        type="button"
+                        class="password-toggle"
+                        onclick="mostrarSenha('password_confirm', this)"
+                    >
+                        Mostrar
+                    </button>
+
+                </div>
+
+            </div>
+
+            <button
+                type="submit"
+                class="btn-submit"
+            >
+                Criar senha
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+
+<script>
+
+function mostrarSenha(id, botao) {
+
+    const campo = document.getElementById(id);
+
+    if (campo.type === "password") {
+
+        campo.type = "text";
+        botao.textContent = "Ocultar";
+
+    } else {
+
+        campo.type = "password";
+        botao.textContent = "Mostrar";
+
+    }
+
+}
+
+</script>
+
+{% endblock %}

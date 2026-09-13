@@ -4,84 +4,185 @@
 {% block title %}Cadastrar participante - ClinSecure{% endblock %}
 
 {% block content %}
+
 <header class="header">
     <div class="profile">
         <img src="{% static 'img/Profile.webp' %}" alt="Logo ClinSecure">
         <h2>ClinSecure</h2>
     </div>
+
     <nav aria-label="Navegação principal">
         <a href="{% url 'home' %}">Início</a>
         <a href="{% url 'logout' %}">Sair</a>
     </nav>
 </header>
 
-
-<body>
-
 <div class="login-container">
+
     <div class="card shadow p-4 login-card">
-        
-        <h2 class="login-title">Cadastro ClinSecure</h2>
 
-        <form  method="POST">
-            {% csrf_token %} 
-            
-            <div class="form-group">
-                <label for="nome" class="labels">Nome completo</label>
-                <input type="text" name="nome" id="nome" class="inputs" autocomplete="name" required>
-            </div>
+        <h2 class="login-title">
+            Cadastro de participante
+        </h2>
 
-             <div class="form-group">
-                <label for="cpf" class="labels">CPF</label>
-                <input type="text" name="cpf" id="cpf" class="inputs" inputmode="numeric" maxlength="11" autocomplete="off" placeholder="Somente números" required>
-            </div>
+        <form method="POST">
+
+            {% csrf_token %}
 
             <div class="form-group">
-                <label for="data_nascimento" class="labels">Data de nascimento</label>
-                <input type="date" name="data_nascimento" id="data_nascimento" class="inputs" autocomplete="bday" required>
+                <label for="nome" class="labels">
+                    Nome completo
+                </label>
+
+                <input
+                    type="text"
+                    name="nome"
+                    id="nome"
+                    class="inputs"
+                    autocomplete="name"
+                    required
+                >
             </div>
 
-            <select
-                name="pesquisa"
-                id="pesquisa"
-                required
-            >
-                <option value="">
-                    Selecione uma pesquisa
-                </option>
+            <div class="form-group">
+                <label for="cpf" class="labels">
+                    CPF
+                </label>
 
-                {% for pesquisa in pesquisas %}
-                    <option value="{{ pesquisa.id }}">
-                        {{ pesquisa.registro_pesquisa }} -
-                        {{ pesquisa.nome }}
+                <input
+                    type="text"
+                    name="cpf"
+                    id="cpf"
+                    class="inputs"
+                    inputmode="numeric"
+                    maxlength="14"
+                    placeholder="000.000.000-00"
+                    autocomplete="off"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="data_nascimento" class="labels">
+                    Data de nascimento
+                </label>
+
+                <input
+                    type="date"
+                    name="data_nascimento"
+                    id="data_nascimento"
+                    class="inputs"
+                    autocomplete="bday"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="email" class="labels">
+                    E-mail
+                </label>
+
+                <input
+                    type="email"
+                    name="email"
+                    id="email"
+                    class="inputs"
+                    autocomplete="email"
+                    placeholder="participante@email.com"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+
+                <label for="pesquisa" class="labels">
+                    Pesquisa
+                </label>
+
+                <select
+                    name="pesquisa"
+                    id="pesquisa"
+                    class="inputs"
+                    required
+                >
+
+                    <option value="">
+                        Selecione uma pesquisa
                     </option>
-                {% endfor %}
 
-            </select>
+                    {% for pesquisa in pesquisas %}
 
-            <p class="privacy-note">Os dados pessoais informados serão protegidos antes de serem armazenados.</p>
-            <button type="submit" class="btn-submit">Cadastrar participante</button>
-        
+                        <option value="{{ pesquisa.id }}">
+                            {{ pesquisa.registro_pesquisa }} -
+                            {{ pesquisa.nome }}
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+            <p class="privacy-note">
+                Os dados pessoais informados serão protegidos
+                antes de serem armazenados.
+            </p>
+
+            <button
+                type="submit"
+                class="btn-submit"
+            >
+                Cadastrar participante
+            </button>
+
         </form>
 
         {% if erro %}
+
             <div class="alert-error" role="alert">
                 {{ erro }}
             </div>
+
         {% endif %}
 
     </div>
+
 </div>
 
-</body>
 {% endblock %}
 
+{% block extra_js %}
 
+<script>
+const cpfInput = document.getElementById("cpf");
 
+cpfInput.addEventListener("input", function () {
 
+    let cpf = this.value.replace(/\D/g, "");
 
+    cpf = cpf.substring(0, 11);
 
+    if (cpf.length > 9) {
+        cpf = cpf.replace(
+            /(\d{3})(\d{3})(\d{3})(\d{1,2})/,
+            "$1.$2.$3-$4"
+        );
 
+    } else if (cpf.length > 6) {
+        cpf = cpf.replace(
+            /(\d{3})(\d{3})(\d{1,3})/,
+            "$1.$2.$3"
+        );
 
+    } else if (cpf.length > 3) {
+        cpf = cpf.replace(
+            /(\d{3})(\d{1,3})/,
+            "$1.$2"
+        );
+    }
 
+    this.value = cpf;
+});
+</script>
 
+{% endblock %}

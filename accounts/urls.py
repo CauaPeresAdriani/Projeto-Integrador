@@ -92,4 +92,16 @@ path(
     views.revogar_acesso_documento_view,
     name='revogar_acesso_documento'
 ),
+path(
+    'documentos/<int:documento_id>/acesso/',
+    views.conceder_acesso_documento_view,
+    name='conceder_acesso_documento'
+),
+path(
+    'ativar-participante/<uidb64>/<token>/',
+    views.ativar_participante_view,
+    name='ativar_participante'
+),
+
+
 ]
