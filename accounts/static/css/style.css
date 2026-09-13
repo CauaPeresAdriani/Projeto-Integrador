@@ -1,21 +1,28 @@
 html {
     scroll-behavior: smooth;
 }
-html, body {
+
+html,
+body {
     height: 100%;
     margin: 0;
-    background-color: #080C16; 
+    background-color: #080C16;
 }
 
 :root {
-    --bg: #FFFFFF;                  
-    --surface: #F8F9FA;             
-    --surface-2: #FFFFFF;           
-    --border: rgba(0, 0, 0, 0.1);   
-    --text: #212529;                
-    --text-muted: #6C757D;          
-    --accent: #DC3545;             
-    --accent-2: #B02A37;            
+    --bg: #FFFFFF;
+    --surface: #F8F9FA;
+    --surface-2: #FFFFFF;
+
+    --border: rgba(0, 0, 0, 0.1);
+
+    --text: #212529;
+    --text-muted: #6C757D;
+
+    /* Identidade principal */
+    --accent: #155E75;
+    --accent-2: #0F3F4F;
+
     --shadow: rgba(0, 0, 0, 0.08);
 
     --font-body: "Inter", sans-serif;
@@ -26,8 +33,8 @@ html, body {
     --radius-lg: 20px;
 }
 
-* { 
-    box-sizing: border-box; 
+* {
+    box-sizing: border-box;
 }
 
 body {
@@ -37,7 +44,6 @@ body {
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
     transition: background-color .35s, color .35s;
-    background-color: #080C16;
 }
 
 h2 {
@@ -45,27 +51,29 @@ h2 {
     font-weight: 700;
 }
 
+/* 
+   LOGIN
+   */
+
 .login-container {
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    padding-top: 80px; 
+    padding-top: 80px;
     max-height: 50%;
-    
 }
-
 
 .login-card {
     width: 100%;
     max-width: 30%;
-    
 }
 
 .login-title {
     margin-bottom: 1.5rem;
     text-align: center;
 }
+
 .login-title:hover {
     color: var(--accent);
     transition: color 0.2s ease;
@@ -76,7 +84,8 @@ h2 {
     text-align: left;
 }
 
-/* Botão principal de envio em vermelho */
+/* Botão principal */
+
 .btn-submit {
     width: 100%;
     padding: 12px;
@@ -94,7 +103,6 @@ h2 {
     background: var(--accent-2);
 }
 
-
 .form-links {
     display: flex;
     justify-content: space-between;
@@ -110,17 +118,22 @@ h2 {
     color: var(--accent);
 }
 
-/* Caixa de alerta de erro */
+/* Caixa de alerta */
+
 .alert-error {
-    color: #DC3545;
-    background-color: rgba(220, 53, 69, 0.1);
-    border: 1px solid rgba(220, 53, 69, 0.2);
+    color: #B42318;
+    background-color: rgba(180, 35, 24, 0.08);
+    border: 1px solid rgba(180, 35, 24, 0.18);
     border-radius: var(--radius-sm);
     margin-top: 12px;
     padding: 8px;
     text-align: center;
     font-size: 0.9rem;
 }
+
+/* 
+   ELEMENTOS GERAIS
+   */
 
 a {
     text-decoration: none;
@@ -134,26 +147,31 @@ button:focus-visible {
     outline-offset: 3px;
 }
 
+/* 
+   HEADER ANTIGO DO SISTEMA
+   */
+
 header.header {
-   position: fixed;
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     z-index: 100;
     height: 72px;
     padding: 0 40px;
-    border-radius: 0; 
+    border-radius: 0;
+
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: rgba(255, 255, 255, 0.9); 
+
+    background: rgba(255, 255, 255, 0.9);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
+
     box-shadow: 0 4px 20px var(--shadow);
     border-bottom: 1px solid var(--border);
-    border-top: none;
-    border-left: none;
-    border-right: none;
+
     transition: background-color .35s ease;
 }
 
@@ -161,9 +179,7 @@ header.header:hover {
     color: var(--accent);
 }
 
-
 .inputs {
-    
     padding: 12px;
     border-radius: var(--radius-sm);
     border: 1px solid var(--border);
@@ -191,7 +207,7 @@ header.header:hover {
     height: 36px;
     width: auto;
     object-fit: contain;
-    border: none; 
+    border: none;
 }
 
 .profile h2 {
@@ -200,6 +216,7 @@ header.header:hover {
     margin: 0;
     color: var(--text);
 }
+
 header.header nav {
     display: flex;
     align-items: center;
@@ -217,6 +234,10 @@ header.header nav a:hover {
     color: var(--accent-2);
 }
 
+/* 
+   CARDS
+   */
+
 .card {
     padding: 28px 20px;
     border-radius: var(--radius-md);
@@ -226,7 +247,7 @@ header.header nav a:hover {
     transition: .25s;
 }
 
-card form{
+.card form {
     text-align: left;
 }
 
@@ -239,14 +260,19 @@ card form{
     display: inline-flex;
     align-items: center;
     justify-content: center;
+
     width: 38px;
     height: 38px;
+
     border-radius: 50%;
     border: 1px solid var(--border);
+
     background: var(--surface-2);
     color: var(--text-muted);
+
     cursor: pointer;
     font-size: .95rem;
+
     transition: .25s;
     flex-shrink: 0;
 }
@@ -257,48 +283,435 @@ card form{
     transform: translateY(-2px);
 }
 
-.theme-toggle .fa-sun { display: none; }
-.theme-toggle .fa-moon { display: inline; }
+.theme-toggle .fa-sun {
+    display: none;
+}
 
-.token-style{
-    margin: 15px; 
+.theme-toggle .fa-moon {
+    display: inline;
+}
+
+.token-style {
+    margin: 15px;
     border-radius: 15px;
     text-align: center;
     max-width: 90%;
     max-height: 90%;
 }
 
-.top-text{
-
-text-align: center;
-margin: 30px;
-
+.top-text {
+    text-align: center;
+    margin: 30px;
 }
 
 .menu-toggle {
     display: none;
 }
 
+/* 
+   DASHBOARD CLINSECURE
+   */
+
+:root {
+    --clin-primary: #155E75;
+    --clin-primary-dark: #0F3F4F;
+    --clin-accent: #0EA5A8;
+
+    --clin-bg: #F4F8FA;
+    --clin-text: #1F2937;
+    --clin-muted: #64748B;
+    --clin-border: #DCE5EA;
+}
+
+/* Área principal */
+
+.app-shell {
+    min-height: 100vh;
+    background: var(--clin-bg);
+}
+
+/* 
+   SIDEBAR
+   */
+
+.app-shell .sidebar {
+    width: 260px;
+    min-height: 100vh;
+
+    background: var(--clin-primary);
+    color: #FFFFFF;
+
+    position: fixed;
+    inset: 0 auto 0 0;
+
+    z-index: 1030;
+
+    transition: transform .25s ease;
+}
+
+.app-shell .sidebar-brand {
+    min-height: 76px;
+
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+
+    padding: 1rem 1.35rem;
+
+    border-bottom: 1px solid rgba(255, 255, 255, .12);
+
+    color: #FFFFFF;
+    text-decoration: none;
+}
+
+.app-shell .brand-mark {
+    width: 38px;
+    height: 38px;
+
+    border-radius: 12px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    background: rgba(255, 255, 255, .14);
+
+    font-size: 1.2rem;
+}
+
+.app-shell .sidebar-nav {
+    padding: 1.25rem .85rem;
+}
+
+.app-shell .sidebar-label {
+    color: rgba(255, 255, 255, .55);
+
+    font-size: .68rem;
+    font-weight: 700;
+
+    letter-spacing: .1em;
+    text-transform: uppercase;
+
+    padding: .75rem .85rem .5rem;
+}
+
+.app-shell .sidebar .nav-link {
+    color: rgba(255, 255, 255, .78);
+
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+
+    border-radius: 10px;
+
+    padding: .75rem .85rem;
+    margin-bottom: .25rem;
+
+    transition:
+        background .2s ease,
+        color .2s ease;
+}
+
+.app-shell .sidebar .nav-link:hover,
+.app-shell .sidebar .nav-link.active {
+    color: #FFFFFF;
+    background: rgba(255, 255, 255, .13);
+}
+
+.app-shell .sidebar .nav-link i {
+    width: 1.25rem;
+
+    text-align: center;
+
+    font-size: 1.05rem;
+}
+
+/* 
+   CONTEÚDO PRINCIPAL
+   */
+
+.app-shell .main-wrapper {
+    margin-left: 260px;
+    min-height: 100vh;
+}
+
+/* 
+   TOPBAR
+   */
+
+.app-shell .topbar {
+    min-height: 76px;
+
+    background: #FFFFFF;
+
+    border-bottom: 1px solid var(--clin-border);
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: .85rem 2rem;
+}
+
+.app-shell .mobile-menu {
+    display: none;
+}
+
+.app-shell .user-avatar {
+    width: 40px;
+    height: 40px;
+
+    border-radius: 50%;
+
+    background: #DDF3F4;
+    color: var(--clin-primary);
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    font-weight: 700;
+}
+
+/* 
+   CONTEÚDO
+   */
+
+.app-shell .content-area {
+    padding: 2rem;
+}
+
+.app-shell .eyebrow {
+    color: var(--clin-accent);
+
+    font-size: .75rem;
+    font-weight: 700;
+
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.app-shell .dashboard-title {
+    color: var(--clin-primary);
+    font-weight: 700;
+}
+
+/* 
+   CARDS DE INDICADORES
+   */
+
+.app-shell .stat-card,
+.app-shell .action-card,
+.app-shell .welcome-card {
+    background: #FFFFFF;
+
+    border: 1px solid var(--clin-border);
+
+    border-radius: 16px;
+
+    box-shadow:
+        0 8px 24px rgba(15, 63, 79, .06);
+}
+
+.app-shell .stat-card {
+    height: 100%;
+    padding: 1.25rem;
+}
+
+.app-shell .stat-icon {
+    width: 44px;
+    height: 44px;
+
+    border-radius: 12px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 1.15rem;
+}
+
+.app-shell .stat-value {
+    color: var(--clin-primary);
+
+    font-size: 1.75rem;
+    font-weight: 700;
+
+    line-height: 1;
+}
+
+.app-shell .stat-label {
+    color: var(--clin-muted);
+    font-size: .88rem;
+}
+
+/* 
+   CARD DE BOAS-VINDAS
+   */
+
+.app-shell .welcome-card {
+    background:
+        linear-gradient(
+            135deg,
+            #155E75 0%,
+            #0F3F4F 100%
+        );
+
+    border: 0;
+
+    color: #FFFFFF;
+
+    padding: 1.6rem;
+}
+
+.app-shell .welcome-card .btn {
+    color: var(--clin-primary);
+
+    background: #FFFFFF;
+
+    border: 0;
+}
+
+/* 
+   AÇÕES
+   */
+
+.app-shell .action-card {
+    color: inherit;
+
+    display: block;
+
+    height: 100%;
+
+    padding: 1.25rem;
+
+    text-decoration: none;
+
+    transition:
+        transform .2s ease,
+        box-shadow .2s ease;
+}
+
+.app-shell .action-card:hover {
+    color: inherit;
+
+    transform: translateY(-3px);
+
+    box-shadow:
+        0 12px 28px rgba(15, 63, 79, .11);
+}
+
+.app-shell .action-card h3 {
+    color: var(--clin-primary);
+
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.app-shell .action-card p {
+    color: var(--clin-muted);
+
+    font-size: .87rem;
+
+    margin-bottom: 0;
+}
+
+.app-shell .action-icon {
+    width: 42px;
+    height: 42px;
+
+    border-radius: 11px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    background: rgba(14, 165, 168, .10);
+
+    color: var(--clin-accent);
+
+    margin-bottom: 1rem;
+}
+
+.password-wrapper {
+    position: relative;
+}
+
+.password-wrapper .inputs {
+    padding-right: 90px;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 13px;
+    color: #163b5c;
+    font-weight: 600;
+}
+
+/* 
+   RESPONSIVIDADE
+   */
+
+@media (max-width: 991.98px) {
+
+    .app-shell .sidebar {
+        transform: translateX(-100%);
+    }
+
+    .app-shell .sidebar.show {
+        transform: translateX(0);
+    }
+
+    .app-shell .main-wrapper {
+        margin-left: 0;
+    }
+
+    .app-shell .mobile-menu {
+        display: inline-flex;
+    }
+
+    .app-shell .topbar {
+        padding: .85rem 1rem;
+    }
+
+    .app-shell .content-area {
+        padding: 1.25rem 1rem;
+    }
+}
+
 @media (max-width: 768px) {
+
     header.header nav a {
         display: none;
     }
 
     .menu-toggle {
         display: flex;
+
         align-items: center;
         justify-content: center;
+
         width: 40px;
         height: 40px;
+
         border: none;
         background: transparent;
+
         color: var(--text);
+
         cursor: pointer;
         font-size: 22px;
     }
 }
 
 @media (max-width: 640px) {
+
     header.header {
         padding: 0 18px;
         height: 64px;
@@ -319,6 +732,7 @@ margin: 30px;
 }
 
 @media (prefers-reduced-motion: reduce) {
+
     * {
         animation: none !important;
         transition: none !important;
