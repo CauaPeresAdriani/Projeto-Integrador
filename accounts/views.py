@@ -27,6 +27,12 @@ from datetime import datetime
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
+import json
+from django.http import HttpResponse, 
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
+
 
 from .models import (
     Consentimento,
@@ -1952,3 +1958,352 @@ def detalhe_participante_view(request, participante_id):
 
 def normalizar_cpf(cpf):
     return re.sub(r'\D', '', cpf)
+
+
+from .models import (
+    Usuario,
+    AuditLog,
+    Participante,
+    Consentimento,
+    ParticipacaoPesquisa,
+    Documento,
+)
+from .crypto import decrypt_data, encrypt_data
+
+
+FINALIDADE_CONSENTIMENTO = (
+    "Gerenciamento e participação em pesquisas clínicas."
+)
+
+VERSAO_CONSENTIMENTO = "1.0"
+
+
+@login_required
+def meus_dados_view(request):
+    if request.user.perfil != "participante":
+        return HttpResponse("Acesso negado.", status=403)
+
+    participante = get_object_or_404(
+        Participante,
+        usuario=request.user
+    )
+
+    consentimentos = participante.consentimentos.order_by(
+        "-data_consentimento"
+    )
+
+    participacoes = (
+        ParticipacaoPesquisa.objects
+        .filter(participante=participante)
+        .select_related("pesquisa")
+    )
+
+    documentos = (
+        participante.documentos
+        .only("id", "nome_original", "data_upload", "status")
+        .order_by("-data_upload")
+    )
+
+    contexto = {
+        "participante": participante,
+        "nome": decrypt_data(participante.nome_encrypted),
+        "cpf": decrypt_data(participante.cpf_encrypted),
+        "data_nascimento": decrypt_data(
+            participante.data_nascimento_encrypted
+        ),
+        "consentimentos": consentimentos,
+        "participacoes": participacoes,
+        "documentos": documentos,
+        "consentimento_ativo": consentimentos.filter(
+            revogado=False
+        ).first(),
+        "finalidade_consentimento": FINALIDADE_CONSENTIMENTO,
+    }
+
+    return render(
+        request,
+        "accounts/meus_dados.html",
+        contexto
+    )
+
+
+@login_required
+def consentir_dados_view(request):
+    if request.user.perfil != "participante":
+        return HttpResponse("Acesso negado.", status=403)
+
+    if request.method != "POST":
+        return redirect("meus_dados")
+
+    aceito = request.POST.get("consentimento")
+
+    if aceito != "sim":
+        return render(
+            request,
+            "accounts/meus_dados.html",
+            {
+                "erro": "É necessário aceitar explicitamente o consentimento."
+            },
+            status=400
+        )
+
+    participante = get_object_or_404(
+        Participante,
+        usuario=request.user
+    )
+
+    consentimento_existente = Consentimento.objects.filter(
+        participante=participante,
+        finalidade=FINALIDADE_CONSENTIMENTO,
+        versao=VERSAO_CONSENTIMENTO,
+        revogado=False
+    ).first()
+
+    if consentimento_existente:
+        return redirect("meus_dados")
+
+    consentimento = Consentimento.objects.create(
+        participante=participante,
+        registrado_por=request.user,
+        finalidade=FINALIDADE_CONSENTIMENTO,
+        versao=VERSAO_CONSENTIMENTO
+    )
+
+    AuditLog.objects.create(
+        usuario=request.user,
+        evento="Consentimento registrado",
+        ip=request.META.get("REMOTE_ADDR"),
+        resultado="Sucesso",
+        detalhes=(
+            f"Consentimento registrado. "
+            f"Finalidade: {consentimento.finalidade}. "
+            f"Versão: {consentimento.versao}."
+        )
+    )
+
+    return redirect("meus_dados")
+
+
+@login_required
+def revogar_consentimento_view(request, consentimento_id):
+    if request.user.perfil != "participante":
+        return HttpResponse("Acesso negado.", status=403)
+
+    participante = get_object_or_404(
+        Participante,
+        usuario=request.user
+    )
+
+    consentimento = get_object_or_404(
+        Consentimento,
+        id=consentimento_id,
+        participante=participante
+    )
+
+    if request.method != "POST":
+        return redirect("meus_dados")
+
+    if consentimento.revogado:
+        return redirect("meus_dados")
+
+    consentimento.revogado = True
+    consentimento.data_revogado = timezone.now()
+    consentimento.save(
+        update_fields=["revogado", "data_revogado"]
+    )
+
+    AuditLog.objects.create(
+        usuario=request.user,
+        evento="Consentimento revogado",
+        ip=request.META.get("REMOTE_ADDR"),
+        resultado="Sucesso",
+        detalhes=(
+            f"Consentimento revogado. "
+            f"Finalidade: {consentimento.finalidade}. "
+            f"Versão: {consentimento.versao}."
+        )
+    )
+
+    return redirect("meus_dados")
+
+
+@login_required
+def exportar_dados_view(request):
+    if request.user.perfil != "participante":
+        return HttpResponse("Acesso negado.", status=403)
+
+    participante = get_object_or_404(
+        Participante,
+        usuario=request.user
+    )
+
+    consentimentos = []
+
+    for consentimento in participante.consentimentos.order_by(
+        "data_consentimento"
+    ):
+        consentimentos.append({
+            "finalidade": consentimento.finalidade,
+            "versao": consentimento.versao,
+            "data_consentimento": (
+                consentimento.data_consentimento.isoformat()
+                if consentimento.data_consentimento
+                else None
+            ),
+            "revogado": consentimento.revogado,
+            "data_revogado": (
+                consentimento.data_revogado.isoformat()
+                if consentimento.data_revogado
+                else None
+            ),
+        })
+
+    participacoes = []
+
+    for participacao in (
+        ParticipacaoPesquisa.objects
+        .filter(participante=participante)
+        .select_related("pesquisa")
+    ):
+        participacoes.append({
+            "pesquisa": participacao.pesquisa.nome,
+            "registro_pesquisa": participacao.pesquisa.registro_pesquisa,
+            "status": participacao.status,
+            "data_entrada": (
+                participacao.data_entrada.isoformat()
+                if participacao.data_entrada
+                else None
+            ),
+            "data_saida": (
+                participacao.data_saida.isoformat()
+                if participacao.data_saida
+                else None
+            ),
+        })
+
+    documentos = []
+
+    for documento in participante.documentos.all():
+        documentos.append({
+            "nome_original": documento.nome_original,
+            "data_upload": (
+                documento.data_upload.isoformat()
+                if documento.data_upload
+                else None
+            ),
+            "status": documento.status,
+        })
+
+    dados = {
+        "dados_pessoais": {
+            "nome": decrypt_data(participante.nome_encrypted),
+            "cpf": decrypt_data(participante.cpf_encrypted),
+            "data_nascimento": decrypt_data(
+                participante.data_nascimento_encrypted
+            ),
+            "email": request.user.email,
+            "registro_participante": (
+                participante.registro_participante
+            ),
+        },
+        "consentimentos": consentimentos,
+        "participacoes_em_pesquisas": participacoes,
+        "documentos": documentos,
+    }
+
+    AuditLog.objects.create(
+        usuario=request.user,
+        evento="Exportação de dados",
+        ip=request.META.get("REMOTE_ADDR"),
+        resultado="Sucesso",
+        detalhes="Titular exportou seus dados pessoais."
+    )
+
+    resposta = HttpResponse(
+        json.dumps(
+            dados,
+            ensure_ascii=False,
+            indent=2,
+            default=str
+        ),
+        content_type="application/json; charset=utf-8"
+    )
+
+    resposta["Content-Disposition"] = (
+        'attachment; filename="meus_dados_clinsecure.json"'
+    )
+
+    return resposta
+
+
+@login_required
+def excluir_dados_view(request):
+    if request.user.perfil != "participante":
+        return HttpResponse("Acesso negado.", status=403)
+
+    if request.method != "POST":
+        return redirect("meus_dados")
+
+    participante = get_object_or_404(
+        Participante,
+        usuario=request.user
+    )
+
+    usuario = request.user
+
+    # Remove os dados pessoais identificáveis,
+    # preservando apenas a estrutura necessária
+    # para rastreabilidade e integridade do sistema.
+    participante.nome_encrypted = encrypt_data(
+        "DADO_REMOVIDO"
+    )
+    participante.cpf_encrypted = encrypt_data(
+        "DADO_REMOVIDO"
+    )
+    participante.data_nascimento_encrypted = encrypt_data(
+        "DADO_REMOVIDO"
+    )
+    participante.ativo = False
+    participante.save(
+        update_fields=[
+            "nome_encrypted",
+            "cpf_encrypted",
+            "data_nascimento_encrypted",
+            "ativo",
+        ]
+    )
+
+    usuario.email = ""
+    usuario.is_active = False
+    usuario.set_unusable_password()
+    usuario.username = f"anonimizado_{usuario.id}"
+    usuario.save(
+        update_fields=[
+            "email",
+            "is_active",
+            "password",
+            "username",
+        ]
+    )
+
+    # Remove o dispositivo TOTP associado.
+    from django_otp.plugins.otp_totp.models import TOTPDevice
+
+    TOTPDevice.objects.filter(
+        user=usuario
+    ).delete()
+
+    AuditLog.objects.create(
+        usuario=None,
+        evento="Exclusão de dados pessoais",
+        ip=request.META.get("REMOTE_ADDR"),
+        resultado="Sucesso",
+        detalhes=(
+            "Dados pessoais do titular foram removidos/"
+            "anonimizados conforme o fluxo de atendimento."
+        )
+    )
+
+    logout(request)
+
+    return redirect("login")
