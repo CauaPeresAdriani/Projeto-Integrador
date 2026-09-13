@@ -26,8 +26,18 @@
             {% csrf_token %} 
             
             <div class="form-group">
-                <label for="username" class="labels">Usuário:</label>
-                <input type="text" name="username" id="username" class="inputs" required>
+                <label for="username" class="labels">
+    E-mail:
+</label>
+
+<input
+    type="email"
+    name="username"
+    id="username"
+    class="inputs"
+    autocomplete="email"
+    required
+>
             </div>
 
             <div class="form-group">

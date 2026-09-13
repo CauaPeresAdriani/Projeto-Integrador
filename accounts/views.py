@@ -20,7 +20,16 @@ from django.urls import reverse
 from django.db.models import Q
 from accounts.crypto import encrypt_data, decrypt_data, encrypt_file, decrypt_file
 import os
+import hashlib
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+from datetime import datetime
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+from django.contrib.auth.password_validation import validate_password
+
 from .models import (
+    Consentimento,
     Usuario,
     Participante,
     AuditLog,
@@ -39,73 +48,102 @@ from .permissions import (
 ## LOGICA DE LOGIN ##
 
 def meu_login_view(request):
-    ## Instanciando variavel erro como none
+
     erro = None
-    ## usa if method post para saber se o usuario clicou no botao de login
+
     if request.method == 'POST':
-        ## Instanciando as variaveis de usuario e capturando os valores digitados pelo usuario no html      
-        user_name = request.POST.get('username')
-        senha = request.POST.get('password')
-         # Procura o usuário no banco
+
+        # E-mail ou usuário informado no formulário
+        user_name = request.POST.get('username', '').strip()
+        senha = request.POST.get('password', '')
+
+        # Primeiro tenta localizar pelo e-mail.
+        # Isso permite que participantes entrem usando o e-mail.
         usuario_cadastrado = Usuario.objects.filter(
-            username=user_name
+            email__iexact=user_name
         ).first()
+
+        # Mantém compatibilidade com contas antigas que ainda usam username.
+        if usuario_cadastrado:
+            username_login = usuario_cadastrado.username
+        else:
+            usuario_cadastrado = Usuario.objects.filter(
+                username=user_name
+            ).first()
+
+            username_login = user_name
+
         # Verifica se o usuário está bloqueado
         if usuario_cadastrado:
+
             agora = timezone.now()
+
             if (
-                ## verificando se o usuario cadastrado existe e se o bloqueio é maior q agora
                 usuario_cadastrado.bloqueado_ate
                 and usuario_cadastrado.bloqueado_ate > agora
             ):
-                erro = "Conta temporariamente bloqueada. Tente novamente mais tarde."
 
-                 # Registra tentativa durante o bloqueio.
+                erro = (
+                    "Conta temporariamente bloqueada. "
+                    "Tente novamente mais tarde."
+                )
+
                 AuditLog.objects.create(
                     usuario=usuario_cadastrado,
                     evento='Tentativa durante bloqueio',
                     ip=request.META.get('REMOTE_ADDR'),
                     resultado='Bloqueado',
-                    detalhes='Tentativa de login realizada enquanto a conta estava bloqueada.'
-                 )
+                    detalhes=(
+                        'Tentativa de login realizada enquanto '
+                        'a conta estava bloqueada.'
+                    )
+                )
 
                 return render(
                     request,
                     'accounts/login.html',
                     {'erro': erro}
                 )
+
             # Libera a conta após o fim do bloqueio
             if (
-                ## se o usuario cadastrado existir e o bloqueio for menor q agora ele autentica
                 usuario_cadastrado.bloqueado_ate
                 and usuario_cadastrado.bloqueado_ate <= agora
             ):
+
                 usuario_cadastrado.bloqueado_ate = None
                 usuario_cadastrado.tentativas_login = 0
                 usuario_cadastrado.save()
-                # Verifica usuário e senha
+
+        # Verifica usuário e senha
         usuario = authenticate(
             request,
-            username=user_name,
+            username=username_login,
             password=senha
         )
+
         # Login correto
         if usuario is not None:
+
             # Zera as tentativas
             usuario.tentativas_login = 0
             usuario.bloqueado_ate = None
             usuario.save()
-            # O usuário acertou o usuário e a senha,
-            # mas ainda NÃO concluiu o login porque falta validar o 2FA.
+
             AuditLog.objects.create(
-            usuario=usuario,
-            evento="Senha validada",
-            ip=request.META.get('REMOTE_ADDR'),
-            resultado="Sucesso",
-            detalhes="Usuário e senha validados. Aguardando validação do segundo fator (2FA)."
+                usuario=usuario,
+                evento="Senha validada",
+                ip=request.META.get('REMOTE_ADDR'),
+                resultado="Sucesso",
+                detalhes=(
+                    "Usuário e senha validados. "
+                    "Aguardando validação do segundo fator (2FA)."
+                )
             )
-        # Guarda o usuário na sessão para o 2FA
+
+            # Guarda o usuário na sessão para o 2FA
             request.session['pre_otp_user_id'] = usuario.id
+
             # Verifica se o 2FA já foi configurado
             dispositivo_confirmado = TOTPDevice.objects.filter(
                 user=usuario,
@@ -113,51 +151,77 @@ def meu_login_view(request):
             ).first()
 
             if dispositivo_confirmado:
-
                 return redirect('verificar_2fa')
-            
+
             else:
                 return redirect('setup_2fa')
+
         # Usuário ou senha incorretos
         else:
+
             if usuario_cadastrado:
+
                 # Aumenta o número de tentativas
                 usuario_cadastrado.tentativas_login += 1
+
                 AuditLog.objects.create(
                     usuario=usuario_cadastrado,
                     evento='Login',
                     ip=request.META.get('REMOTE_ADDR'),
                     resultado='Falha',
-                    detalhes=f'Tentativa de login incorreta. Tentativa {usuario_cadastrado.tentativas_login}.'
+                    detalhes=(
+                        'Tentativa de login incorreta. '
+                        f'Tentativa {usuario_cadastrado.tentativas_login}.'
+                    )
                 )
-                # Cria um atraso conforme o número de tentativas.
+
+                # Cria um atraso conforme o número de tentativas
                 atraso = usuario_cadastrado.tentativas_login
-                # Aplica o atraso antes de permitir uma nova tentativa.
+
                 time.sleep(atraso)
+
                 # Bloqueia após 5 tentativas
                 if usuario_cadastrado.tentativas_login >= 5:
+
                     usuario_cadastrado.bloqueado_ate = (
                         timezone.now() + timedelta(minutes=5)
                     )
+
                     usuario_cadastrado.tentativas_login = 5
-                    erro = "Muitas tentativas. Conta bloqueada por 5 minutos."
-                    # Registra o bloqueio da conta.
+
+                    erro = (
+                        "Muitas tentativas. "
+                        "Conta bloqueada por 5 minutos."
+                    )
+
                     AuditLog.objects.create(
                         usuario=usuario_cadastrado,
                         evento='Bloqueio de conta',
                         ip=request.META.get('REMOTE_ADDR'),
                         resultado='Bloqueado',
-                        detalhes='Conta bloqueada após 5 tentativas de login incorretas.'
+                        detalhes=(
+                            'Conta bloqueada após 5 tentativas '
+                            'de login incorretas.'
+                        )
                     )
+
                 else:
-                    restantes = 5 - usuario_cadastrado.tentativas_login
+
+                    restantes = (
+                        5 - usuario_cadastrado.tentativas_login
+                    )
+
                     erro = (
-                        f"Usuário ou senha incorretos. "
+                        "Usuário ou senha incorretos. "
                         f"Restam {restantes} tentativa(s)."
                     )
+
                 usuario_cadastrado.save()
+
             else:
+
                 erro = "Usuário ou senha incorretos."
+
     # Mostra a tela de login
     return render(
         request,
@@ -209,8 +273,6 @@ def cadastro_view(request):
         
     return render(request, 'accounts/cadastro.html', {'erro': erro})
 
-
-
 @login_required
 def cadastro_participante_view(request):
 
@@ -220,23 +282,31 @@ def cadastro_participante_view(request):
             status=403
         )
 
-    erro = None
-
-    # O responsável só pode cadastrar participantes
-    # em pesquisas que pertencem a ele.
     pesquisas = Pesquisa.objects.filter(
         responsavel=request.user
     )
 
+    erro = None
+
     if request.method == 'POST':
 
         nome = request.POST.get('nome', '').strip()
-        data_nascimento = request.POST.get('data_nascimento', '').strip()
+        email = request.POST.get('email', '').strip()
+        data_nascimento = request.POST.get(
+            'data_nascimento',
+            ''
+        ).strip()
         cpf = request.POST.get('cpf', '').strip()
         pesquisa_id = request.POST.get('pesquisa')
 
-        if not nome or not data_nascimento or not cpf or not pesquisa_id:
+        # Normalização
+        cpf = normalizar_cpf(cpf)
+
+        # Campos obrigatórios
+        if not nome or not email or not data_nascimento or not cpf or not pesquisa_id:
+
             erro = "Preencha todos os campos obrigatórios."
+
             return render(
                 request,
                 'accounts/cadastro_participante.html',
@@ -246,29 +316,166 @@ def cadastro_participante_view(request):
                 }
             )
 
-        # Garante que a pesquisa pertence ao responsável logado.
+        # Validação do e-mail
+        try:
+            validate_email(email)
+        except ValidationError:
+
+            erro = "Informe um endereço de e-mail válido."
+
+            return render(
+                request,
+                'accounts/cadastro_participante.html',
+                {
+                    'erro': erro,
+                    'pesquisas': pesquisas
+                }
+            )
+
+        # Validação do CPF
+        if len(cpf) != 11 or not cpf.isdigit():
+
+            erro = "Informe um CPF válido com 11 dígitos."
+
+            return render(
+                request,
+                'accounts/cadastro_participante.html',
+                {
+                    'erro': erro,
+                    'pesquisas': pesquisas
+                }
+            )
+
+        # Validação matemática do CPF
+        def cpf_valido(cpf):
+
+            if cpf == cpf[0] * 11:
+                return False
+
+            soma = sum(
+                int(cpf[i]) * (10 - i)
+                for i in range(9)
+            )
+
+            digito1 = (soma * 10) % 11
+
+            if digito1 == 10:
+                digito1 = 0
+
+            if digito1 != int(cpf[9]):
+                return False
+
+            soma = sum(
+                int(cpf[i]) * (11 - i)
+                for i in range(10)
+            )
+
+            digito2 = (soma * 10) % 11
+
+            if digito2 == 10:
+                digito2 = 0
+
+            return digito2 == int(cpf[10])
+
+        if not cpf_valido(cpf):
+
+            erro = "O CPF informado é inválido."
+
+            return render(
+                request,
+                'accounts/cadastro_participante.html',
+                {
+                    'erro': erro,
+                    'pesquisas': pesquisas
+                }
+            )
+
+        # Validação da data
+        try:
+
+            data_nasc = datetime.strptime(
+                data_nascimento,
+                "%Y-%m-%d"
+            ).date()
+
+            if data_nasc > timezone.now().date():
+
+                erro = "A data de nascimento não pode ser futura."
+
+                return render(
+                    request,
+                    'accounts/cadastro_participante.html',
+                    {
+                        'erro': erro,
+                        'pesquisas': pesquisas
+                    }
+                )
+
+        except ValueError:
+
+            erro = "Data de nascimento inválida."
+
+            return render(
+                request,
+                'accounts/cadastro_participante.html',
+                {
+                    'erro': erro,
+                    'pesquisas': pesquisas
+                }
+            )
+
+        # Verifica a pesquisa
         pesquisa = Pesquisa.objects.filter(
             id=pesquisa_id,
             responsavel=request.user
         ).first()
 
         if not pesquisa:
+
             return HttpResponse(
                 "Acesso negado à pesquisa selecionada.",
                 status=403
             )
 
-        # Cria o participante inicialmente para obter o ID.
+        # Verifica e-mail duplicado
+        if Usuario.objects.filter(
+            email__iexact=email
+        ).exists():
+
+            erro = "Este e-mail já está associado a uma conta."
+
+            return render(
+                request,
+                'accounts/cadastro_participante.html',
+                {
+                    'erro': erro,
+                    'pesquisas': pesquisas
+                }
+            )
+
+        # Cria usuário do participante
+        usuario = Usuario.objects.create_user(
+            username=f"participante_{timezone.now().timestamp()}",
+            email=email,
+            perfil="participante"
+        )
+
+        # Participante ainda não possui senha
+        usuario.set_unusable_password()
+        usuario.save()
+
+        # Cria participante
         participante = Participante.objects.create(
             registro_participante='TEMP',
             nome_encrypted=encrypt_data(nome),
-            data_nascimento_encrypted=encrypt_data(data_nascimento),
             cpf_encrypted=encrypt_data(cpf),
+            data_nascimento_encrypted=encrypt_data(
+                data_nascimento
+            ),
             ativo=True,
-            usuario=None
+            usuario=usuario
         )
 
-        # Gera o registro pseudônimo.
         participante.registro_participante = (
             f"PT-{participante.id:06d}"
         )
@@ -277,28 +484,133 @@ def cadastro_participante_view(request):
             update_fields=['registro_participante']
         )
 
-        # Vincula o participante à pesquisa.
+        # Vincula participante à pesquisa
         ParticipacaoPesquisa.objects.create(
             participante=participante,
             pesquisa=pesquisa,
             status='ativo'
         )
 
-        # Registra o cadastro na auditoria.
-        AuditLog.objects.create(
-            usuario=request.user,
-            evento="Cadastro de participante bem-sucedido",
-            ip=request.META.get('REMOTE_ADDR'),
-            resultado="Sucesso",
-            detalhes=(
-                f"Participante {participante.registro_participante} "
-                f"cadastrado e vinculado à pesquisa "
-                f"{pesquisa.registro_pesquisa}. "
-                f"Dados pessoais criptografados."
+        # Cria dispositivo 2FA
+        TOTPDevice.objects.get_or_create(
+            user=usuario,
+            name="Celular Principal",
+            defaults={
+                'confirmed': False
+            }
+        )
+
+        # Gera link de ativação
+        uid = urlsafe_base64_encode(
+            force_bytes(usuario.pk)
+        )
+
+        token = default_token_generator.make_token(
+            usuario
+        )
+
+        link = request.build_absolute_uri(
+            reverse(
+                'ativar_participante',
+                kwargs={
+                    'uidb64': uid,
+                    'token': token
+                }
             )
         )
 
-        return redirect('cadastro_participante')
+        # Envia e-mail
+        try:
+
+            resposta = requests.post(
+                'https://api.brevo.com/v3/smtp/email',
+
+                headers={
+                    'accept': 'application/json',
+                    'api-key': os.getenv('BREVO_API_KEY'),
+                    'content-type': 'application/json',
+                },
+
+                json={
+                    'sender': {
+                        'name': os.getenv('BREVO_SENDER_NAME'),
+                        'email': os.getenv('BREVO_SENDER_EMAIL'),
+                    },
+
+                    'to': [
+                        {
+                            'email': email,
+                            'name': nome,
+                        }
+                    ],
+
+                    'subject': 'ClinSecure - Ative sua conta',
+
+                    'textContent': (
+                        f'Olá, {nome}.\n\n'
+                        'Seu cadastro no ClinSecure foi realizado.\n\n'
+                        'Para criar sua senha, acesse o link abaixo:\n\n'
+                        f'{link}\n\n'
+                        'Após criar sua senha, você poderá entrar '
+                        'no ClinSecure utilizando seu e-mail.\n\n'
+                        'Se você não esperava este cadastro, '
+                        'entre em contato com o responsável pela pesquisa.'
+                    ),
+                },
+
+                timeout=10,
+            )
+
+            resposta.raise_for_status()
+
+        except Exception as e:
+
+            print("===== ERRO AO ENVIAR CONVITE BREVO =====")
+            print("TIPO:", type(e).__name__)
+            print("ERRO:", e)
+
+            if 'resposta' in locals():
+                print("STATUS:", resposta.status_code)
+                print("RESPOSTA BREVO:", resposta.text)
+
+            print("=========================================")
+
+            participante.delete()
+            usuario.delete()
+
+            erro = (
+                "O participante não foi cadastrado porque "
+                "não foi possível enviar o e-mail de ativação."
+            )
+
+            return render(
+                request,
+                'accounts/cadastro_participante.html',
+                {
+                    'erro': erro,
+                    'pesquisas': pesquisas
+                }
+            )
+
+        # Auditoria
+        AuditLog.objects.create(
+            usuario=request.user,
+            evento="Cadastro de participante",
+            ip=request.META.get('REMOTE_ADDR'),
+            resultado="Sucesso",
+            detalhes=(
+                f"Participante "
+                f"{participante.registro_participante} "
+                f"cadastrado e vinculado à pesquisa "
+                f"{pesquisa.registro_pesquisa}. "
+                f"Dados pessoais criptografados. "
+                f"Convite enviado por e-mail."
+            )
+        )
+
+        return redirect(
+            'cadastro_participante'
+        )
 
     return render(
         request,
@@ -309,6 +621,194 @@ def cadastro_participante_view(request):
         }
     )
 
+def ativar_participante_view(request, uidb64, token):
+
+    from django.utils.http import urlsafe_base64_decode
+
+    try:
+        uid = urlsafe_base64_decode(uidb64).decode()
+
+        usuario = Usuario.objects.get(
+            pk=uid,
+            perfil="participante"
+        )
+
+    except (
+        TypeError,
+        ValueError,
+        OverflowError,
+        Usuario.DoesNotExist
+    ):
+        return render(
+            request,
+            'accounts/ativar_participante.html',
+            {
+                'validlink': False,
+                'erro': 'Link inválido ou expirado.'
+            }
+        )
+
+    if not default_token_generator.check_token(
+        usuario,
+        token
+    ):
+        return render(
+            request,
+            'accounts/ativar_participante.html',
+            {
+                'validlink': False,
+                'erro': 'Link inválido ou expirado.'
+            }
+        )
+
+    if request.method == 'POST':
+
+        senha1 = request.POST.get('password', '')
+        senha2 = request.POST.get('password_confirm', '')
+
+        if not senha1 or not senha2:
+            return render(
+                request,
+                'accounts/ativar_participante.html',
+                {
+                    'validlink': True,
+                    'erro': 'Preencha os dois campos de senha.'
+                }
+            )
+
+        if senha1 != senha2:
+            return render(
+                request,
+                'accounts/ativar_participante.html',
+                {
+                    'validlink': True,
+                    'erro': 'As senhas não são iguais.'
+                }
+            )
+
+        if len(senha1) < 8:
+            return render(
+                request,
+                'accounts/ativar_participante.html',
+                {
+                    'validlink': True,
+                    'erro': 'A senha deve possuir pelo menos 8 caracteres.'
+                }
+            )
+
+        usuario.set_password(senha1)
+        usuario.save()
+
+        AuditLog.objects.create(
+            usuario=usuario,
+            evento="Conta de participante ativada",
+            ip=request.META.get('REMOTE_ADDR'),
+            resultado="Sucesso",
+            detalhes=(
+                "Participante criou sua senha através "
+                "do link de ativação."
+            )
+        )
+
+        return redirect('login')
+
+    return render(
+        request,
+        'accounts/ativar_participante.html',
+        {
+            'validlink': True
+        }
+    )
+
+def ativar_conta_participante_view(request, uidb64, token):
+
+    try:
+        uid = force_bytes(
+            base64.urlsafe_b64decode(
+                uidb64.encode()
+            )
+        )
+
+        usuario_id = int(uid.decode())
+
+        usuario = Usuario.objects.get(
+            pk=usuario_id,
+            perfil='participante'
+        )
+
+    except (ValueError, TypeError, OverflowError, Usuario.DoesNotExist):
+
+        return HttpResponse(
+            "Link de ativação inválido.",
+            status=400
+        )
+
+    if not default_token_generator.check_token(usuario, token):
+
+        return HttpResponse(
+            "Este link de ativação é inválido ou já foi utilizado.",
+            status=400
+        )
+
+    if request.method == 'POST':
+
+        senha = request.POST.get('password', '')
+        confirmacao = request.POST.get('password_confirm', '')
+
+        if not senha or not confirmacao:
+
+            return render(
+                request,
+                'accounts/ativar_participante.html',
+                {
+                    'erro': 'Preencha os dois campos de senha.'
+                }
+            )
+
+        if senha != confirmacao:
+
+            return render(
+                request,
+                'accounts/ativar_participante.html',
+                {
+                    'erro': 'As senhas não são iguais.'
+                }
+            )
+
+        try:
+
+            validate_password(
+                senha,
+                usuario
+            )
+
+        except ValidationError as e:
+
+            return render(
+                request,
+                'accounts/ativar_participante.html',
+                {
+                    'erro': ' '.join(e.messages)
+                }
+            )
+
+        usuario.set_password(senha)
+        usuario.save()
+
+        AuditLog.objects.create(
+            usuario=usuario,
+            evento="Ativação de conta",
+            ip=request.META.get('REMOTE_ADDR'),
+            resultado="Sucesso",
+            detalhes="Participante criou sua senha e ativou a conta."
+        )
+
+        return redirect('login')
+
+    return render(
+        request,
+        'accounts/ativar_participante.html'
+    )
 
 ## LOGICA DE 2FA ##
 def meu_setup_2fa_view(request):
@@ -496,12 +996,43 @@ def verificar_2fa_view(request):
     )
 
 ## LOGICA DE DEFESA DE URL ##
-# Exige que o usuário esteja logado para acessar a página inicial.
+# accounts/views.py
+# (Mantenha todos os imports existentes)
+
 @login_required
 def home_view(request):
-    # Exibe a página inicial.
-    return render(request, 'accounts/home.html')
+    """
+    View do Dashboard.
+    Envia os indicadores com base no perfil do usuário, 
+    respeitando as regras de visualização existentes.
+    """
+    context = {}
+    usuario = request.user
+    
+    # Administrador e Coordenador veem métricas globais
+    if usuario.perfil in ['administrador', 'coordenador']:
+        context['total_participantes'] = Participante.objects.filter(ativo=True).count()
+        context['pesquisas_ativas'] = Pesquisa.objects.filter(status='ativa').count()
+        context['documentos_cadastrados'] = Documento.objects.count()
+        context['usuarios_ativos'] = Usuario.objects.filter(is_active=True).count()
+        
+    # Responsável vê métricas das suas próprias pesquisas e participantes atrelados
+    elif usuario.perfil == 'responsavel':
+        context['total_participantes'] = Participante.objects.filter(ativo=True, participacoes_pesquisa__pesquisa__responsavel=usuario).distinct().count()
+        context['pesquisas_ativas'] = Pesquisa.objects.filter(status='ativa', responsavel=usuario).count()
+        context['documentos_cadastrados'] = Documento.objects.filter(responsavel=usuario).count()
+        
+    # Pesquisador vê métricas gerais das pesquisas e participantes vinculados a pesquisas
+    elif usuario.perfil == 'pesquisador':
+        context['pesquisas_ativas'] = Pesquisa.objects.filter(status='ativa').count()
+        context['total_participantes'] = Participante.objects.filter(ativo=True, participacoes_pesquisa__isnull=False).distinct().count()
+        
+    # Participante vê métricas estritamente ligadas a ele
+    elif usuario.perfil == 'participante':
+        context['minhas_pesquisas'] = ParticipacaoPesquisa.objects.filter(participante__usuario=usuario, status='ativo').count()
+        context['meus_documentos'] = Documento.objects.filter(participante__usuario=usuario).count()
 
+    return render(request, 'accounts/home.html', context)
 
 
 
@@ -753,6 +1284,84 @@ def confirmar_recuperacao_senha_view(request, uidb64, token):
 
 @login_required
 def upload_documento_view(request):
+    if request.user.perfil not in [
+        "responsavel",
+        "administrador",
+        "coordenador",
+    ]:
+        return HttpResponse("Acesso negado.", status=403)
+
+    if request.user.perfil == "responsavel":
+        participantes = Participante.objects.filter(
+            ativo=True,
+            participacoes_pesquisa__pesquisa__responsavel=request.user
+        ).distinct()
+    else:
+        participantes = Participante.objects.filter(
+            ativo=True
+        )
+
+    if request.method == "GET":
+        return render(
+            request,
+            "accounts/upload_documento.html",
+            {"participantes": participantes}
+        )
+
+    if request.method != "POST":
+        return HttpResponse("Método não permitido.", status=405)
+
+    participante_id = request.POST.get("participante")
+    arquivo = request.FILES.get("arquivo")
+
+    if not participante_id or not arquivo:
+        return render(
+            request,
+            "accounts/upload_documento.html",
+            {
+                "participantes": participantes,
+                "erro": "Participante e arquivo são obrigatórios."
+            },
+            status=400
+        )
+
+    try:
+        participante = Participante.objects.get(
+            id=participante_id,
+            ativo=True
+        )
+    except Participante.DoesNotExist:
+        return HttpResponse(
+            "Participante não encontrado.",
+            status=404
+        )
+
+    if not usuario_pode_acessar_participante(
+        request.user,
+        participante
+    ):
+        return HttpResponse("Acesso negado.", status=403)
+
+    documento = Documento.objects.create(
+        participante=participante,
+        responsavel=request.user,
+        nome_original=arquivo.name,
+        arquivo_criptografado=encrypt_file(arquivo),
+        status="pendente"
+    )
+
+    AuditLog.objects.create(
+        usuario=request.user,
+        evento="Upload de documento",
+        ip=request.META.get("REMOTE_ADDR"),
+        resultado="Sucesso",
+        detalhes=(
+            f"Documento '{arquivo.name}' enviado para "
+            f"{participante.registro_participante}."
+        )
+    )
+
+    return HttpResponse("Documento enviado com sucesso.")
 
     if request.user.perfil not in [
         "responsavel",
@@ -860,6 +1469,105 @@ def download_documento_view(request, documento_id):
 
 @login_required
 def conceder_acesso_documento_view(request, documento_id):
+    if request.user.perfil not in [
+        "responsavel",
+        "administrador",
+        "coordenador",
+    ]:
+        return HttpResponse("Acesso negado.", status=403)
+
+    try:
+        documento = Documento.objects.get(id=documento_id)
+    except Documento.DoesNotExist:
+        return HttpResponse("Documento não encontrado.", status=404)
+
+    if not usuario_pode_acessar_participante(
+        request.user,
+        documento.participante
+    ):
+        return HttpResponse("Acesso negado.", status=403)
+
+    usuarios = Usuario.objects.filter(
+        is_active=True
+    ).exclude(
+        id=request.user.id
+    )
+
+    if request.method == "GET":
+        return render(
+            request,
+            "accounts/conceder_acesso_documento.html",
+            {
+                "documento": documento,
+                "usuarios": usuarios,
+            }
+        )
+
+    if request.method != "POST":
+        return HttpResponse("Método não permitido.", status=405)
+
+    usuario_id = request.POST.get("usuario_id")
+    inicio = request.POST.get("inicio_acesso")
+    fim = request.POST.get("fim_acesso")
+
+    if not usuario_id or not inicio or not fim:
+        return render(
+            request,
+            "accounts/conceder_acesso_documento.html",
+            {
+                "documento": documento,
+                "usuarios": usuarios,
+                "erro": "Usuário, início e fim do acesso são obrigatórios."
+            },
+            status=400
+        )
+
+    try:
+        usuario = Usuario.objects.get(
+            id=usuario_id,
+            is_active=True
+        )
+    except Usuario.DoesNotExist:
+        return HttpResponse(
+            "Usuário não encontrado.",
+            status=404
+        )
+
+    if inicio >= fim:
+        return render(
+            request,
+            "accounts/conceder_acesso_documento.html",
+            {
+                "documento": documento,
+                "usuarios": usuarios,
+                "erro": "O fim do acesso deve ser posterior ao início."
+            },
+            status=400
+        )
+
+    Acesso.objects.create(
+        documento=documento,
+        usuario=usuario,
+        concedido_por=request.user,
+        inicio_acesso=inicio,
+        fim_acesso=fim,
+    )
+
+    AuditLog.objects.create(
+        usuario=request.user,
+        evento="Acesso a documento concedido",
+        ip=request.META.get("REMOTE_ADDR"),
+        resultado="Sucesso",
+        detalhes=(
+            f"Acesso ao documento "
+            f"'{documento.nome_original}' "
+            f"concedido para {usuario.username}."
+        )
+    )
+
+    return HttpResponse(
+        "Acesso concedido com sucesso."
+    )
 
     if request.user.perfil not in [
         "responsavel",
@@ -1238,5 +1946,9 @@ def detalhe_participante_view(request, participante_id):
             'dados': dados_exibicao,
             'faixa_etaria': faixa_etaria,
             'documentos': documentos,
+            "now": timezone.now(),
         }
     )
+
+def normalizar_cpf(cpf):
+    return re.sub(r'\D', '', cpf)
