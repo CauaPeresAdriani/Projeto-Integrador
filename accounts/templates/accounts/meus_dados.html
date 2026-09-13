@@ -1,0 +1,288 @@
+{% extends "accounts/base.html" %}
+
+{% block title %}Meus Dados - ClinSecure{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <h1 class="mb-4">Meus Dados</h1>
+
+    {% if erro %}
+        <div class="alert alert-danger">
+            {{ erro }}
+        </div>
+    {% endif %}
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <strong>Dados pessoais</strong>
+        </div>
+
+        <div class="card-body">
+            <p><strong>Nome:</strong> {{ nome }}</p>
+
+            <p><strong>CPF:</strong> {{ cpf }}</p>
+
+            <p>
+                <strong>Data de nascimento:</strong>
+                {{ data_nascimento }}
+            </p>
+
+            <p>
+                <strong>E-mail:</strong>
+                {{ request.user.email }}
+            </p>
+
+            <p>
+                <strong>Registro do participante:</strong>
+                {{ participante.registro_participante }}
+            </p>
+
+            <p>
+                <strong>Status:</strong>
+                {% if participante.ativo %}
+                    Ativo
+                {% else %}
+                    Inativo
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <strong>Consentimento</strong>
+        </div>
+
+        <div class="card-body">
+
+            {% if consentimento_ativo %}
+
+                <p>
+                    <strong>Finalidade:</strong>
+                    {{ consentimento_ativo.finalidade }}
+                </p>
+
+                <p>
+                    <strong>Versão:</strong>
+                    {{ consentimento_ativo.versao }}
+                </p>
+
+                <p>
+                    <strong>Data:</strong>
+                    {{ consentimento_ativo.data_consentimento }}
+                </p>
+
+                <p>
+                    <strong>Status:</strong>
+                    Ativo
+                </p>
+
+                <form
+                    method="post"
+                    action="{% url 'revogar_consentimento' consentimento_ativo.id %}"
+                >
+                    {% csrf_token %}
+
+                    <button
+                        type="submit"
+                        class="btn btn-warning"
+                        onclick="return confirm('Deseja realmente revogar o consentimento?');"
+                    >
+                        Revogar consentimento
+                    </button>
+                </form>
+
+            {% else %}
+
+                <p>
+                    Você ainda não possui um consentimento ativo.
+                </p>
+
+                <p>
+                    <strong>Finalidade:</strong><br>
+                    {{ finalidade_consentimento }}
+                </p>
+
+                <form
+                    method="post"
+                    action="{% url 'consentir_dados' %}"
+                >
+                    {% csrf_token %}
+
+                    <div class="form-check mb-3">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            name="consentimento"
+                            value="sim"
+                            id="consentimento"
+                            required
+                        >
+
+                        <label
+                            class="form-check-label"
+                            for="consentimento"
+                        >
+                            Declaro que li e concordo com o tratamento
+                            dos meus dados para a finalidade apresentada.
+                        </label>
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+                        Conceder consentimento
+                    </button>
+                </form>
+
+            {% endif %}
+
+        </div>
+    </div>
+
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <strong>Histórico de consentimentos</strong>
+        </div>
+
+        <div class="card-body">
+
+            {% for consentimento in consentimentos %}
+
+                <div class="border rounded p-3 mb-2">
+
+                    <p class="mb-1">
+                        <strong>Finalidade:</strong>
+                        {{ consentimento.finalidade }}
+                    </p>
+
+                    <p class="mb-1">
+                        <strong>Versão:</strong>
+                        {{ consentimento.versao }}
+                    </p>
+
+                    <p class="mb-1">
+                        <strong>Data:</strong>
+                        {{ consentimento.data_consentimento }}
+                    </p>
+
+                    <p class="mb-0">
+                        <strong>Status:</strong>
+
+                        {% if consentimento.revogado %}
+                            Revogado em
+                            {{ consentimento.data_revogado }}
+                        {% else %}
+                            Ativo
+                        {% endif %}
+                    </p>
+
+                </div>
+
+            {% empty %}
+
+                <p>Nenhum consentimento registrado.</p>
+
+            {% endfor %}
+
+        </div>
+    </div>
+
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <strong>Pesquisas</strong>
+        </div>
+
+        <div class="card-body">
+
+            {% for participacao in participacoes %}
+
+                <div class="border rounded p-3 mb-2">
+
+                    <strong>
+                        {{ participacao.pesquisa.nome }}
+                    </strong>
+
+                    <p class="mb-0">
+                        Status:
+                        {{ participacao.status }}
+                    </p>
+
+                </div>
+
+            {% empty %}
+
+                <p>Nenhuma participação encontrada.</p>
+
+            {% endfor %}
+
+        </div>
+    </div>
+
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <strong>Documentos</strong>
+        </div>
+
+        <div class="card-body">
+
+            {% for documento in documentos %}
+
+                <div class="border rounded p-3 mb-2">
+
+                    <strong>
+                        {{ documento.nome_original }}
+                    </strong>
+
+                    <p class="mb-0">
+                        Status: {{ documento.status }}
+                    </p>
+
+                </div>
+
+            {% empty %}
+
+                <p>Nenhum documento cadastrado.</p>
+
+            {% endfor %}
+
+        </div>
+    </div>
+
+
+    <div class="d-flex gap-2 flex-wrap mb-4">
+
+        <a
+            href="{% url 'exportar_dados' %}"
+            class="btn btn-success"
+        >
+            Exportar meus dados
+        </a>
+
+        <form
+            method="post"
+            action="{% url 'excluir_dados' %}"
+        >
+            {% csrf_token %}
+
+            <button
+                type="submit"
+                class="btn btn-danger"
+                onclick="return confirm('Essa ação removerá seus dados pessoais e desativará sua conta. Deseja continuar?');"
+            >
+                Excluir meus dados
+            </button>
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

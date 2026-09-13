@@ -103,5 +103,34 @@ path(
     name='ativar_participante'
 ),
 
+path(
+    "meus-dados/",
+    views.meus_dados_view,
+    name="meus_dados"
+),
+
+path(
+    "meus-dados/consentir/",
+    views.consentir_dados_view,
+    name="consentir_dados"
+),
+
+path(
+    "meus-dados/consentimento/<int:consentimento_id>/revogar/",
+    views.revogar_consentimento_view,
+    name="revogar_consentimento"
+),
+
+path(
+    "meus-dados/exportar/",
+    views.exportar_dados_view,
+    name="exportar_dados"
+),
+
+path(
+    "meus-dados/excluir/",
+    views.excluir_dados_view,
+    name="excluir_dados"
+),
 
 ]
