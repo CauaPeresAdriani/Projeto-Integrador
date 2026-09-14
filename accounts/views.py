@@ -1380,13 +1380,13 @@ def visualizar_documento_view(request, documento_id):
 
 @login_required
 def conceder_acesso_documento_view(request, documento_id):
-    if request.user.perfil not in [
-        "responsavel",
-        "administrador",
-        "coordenador",
-    ]:
-        return HttpResponse("Acesso negado.", status=403)
 
+    if request.user.perfil != "coordenador":
+        return HttpResponse(
+            "Acesso negado.",
+            status=403
+        )
+    
     try:
         documento = Documento.objects.get(id=documento_id)
     except Documento.DoesNotExist:
@@ -1399,9 +1399,8 @@ def conceder_acesso_documento_view(request, documento_id):
         return HttpResponse("Acesso negado.", status=403)
 
     usuarios = Usuario.objects.filter(
-        is_active=True
-    ).exclude(
-        id=request.user.id
+        is_active=True,
+        perfil__in=["pesquisador", "responsavel"]
     )
 
     if request.method == "GET":

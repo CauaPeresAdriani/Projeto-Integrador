@@ -1,0 +1,86 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}Conceder Acesso - ClinSecure{% endblock %}
+
+{% block content %}
+
+<div class="login-container">
+
+    <div class="card shadow p-4 login-card">
+
+        <h2 class="login-title">
+            Conceder Acesso ao Documento
+        </h2>
+
+        <p>
+            <strong>Documento:</strong>
+            {{ documento.nome_original }}
+        </p>
+
+        <form method="POST">
+
+            {% csrf_token %}
+
+            <label for="usuario_id">
+                Usuário
+            </label>
+
+            <select name="usuario_id" id="usuario_id" required>
+                <option value="">
+                    Selecione o usuário
+                </option>
+
+                {% for usuario in usuarios %}
+                    <option value="{{ usuario.id }}">
+                        {{ usuario.username }}
+                    </option>
+                {% endfor %}
+            </select>
+            <div>
+
+                <label for="inicio_acesso">
+                Início do acesso
+            </label>
+
+            <input
+                type="datetime-local"
+                name="inicio_acesso"
+                id="inicio_acesso"
+                required
+            >
+
+            </div>
+            
+
+            <label for="fim_acesso">
+                Fim do acesso
+            </label>
+
+            <input
+                type="datetime-local"
+                name="fim_acesso"
+                id="fim_acesso"
+                required
+            >
+
+            {% if erro %}
+                <div class="alert-error" role="alert">
+                    {{ erro }}
+                </div>
+            {% endif %}
+
+            <button
+                type="submit"
+                class="btn-submit"
+            >
+                Conceder Acesso
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}
