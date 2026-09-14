@@ -1,55 +1,55 @@
 import base64
-from io import BytesIO
+import hashlib
+import json
+import os
 import re
+import time
+from datetime import datetime, timedelta
+from io import BytesIO
+import qrcode
+import requests
+
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, request
-from django.shortcuts import redirect, render
-import qrcode
-from django_otp.plugins.otp_totp.models import TOTPDevice
-from accounts.models import Participante, Usuario, AuditLog
-from datetime import timedelta 
-from django.utils import timezone
-import time
-from django.utils.http import urlsafe_base64_encode
-from django.utils.encoding import force_bytes
-from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail
-import requests
-from django.urls import reverse
-from django.db.models import Q
-from accounts.crypto import encrypt_data, decrypt_data, encrypt_file, decrypt_file
-import os
-import hashlib
-from django.core.validators import validate_email
-from django.core.exceptions import ValidationError
-from datetime import datetime
-from django.core.validators import validate_email
-from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
-import json
+from django.contrib.auth.tokens import default_token_generator
+from django.core.exceptions import ValidationError
+from django.core.mail import send_mail
+from django.core.validators import validate_email
+from django.db.models import Q
 from django.http import HttpResponse
-from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 
+from django_otp.plugins.otp_totp.models import TOTPDevice
+
+from .crypto import (
+    decrypt_data,
+    decrypt_file,
+    encrypt_data,
+    encrypt_file,
+)
 
 from .models import (
-    Consentimento,
-    Usuario,
-    Participante,
-    AuditLog,
-    Documento,
-    Pesquisa,
-    ParticipacaoPesquisa,
     Acesso,
-    DadoPesquisa
+    AuditLog,
+    Consentimento,
+    DadoPesquisa,
+    Documento,
+    ParticipacaoPesquisa,
+    Participante,
+    Pesquisa,
+    Usuario,
 )
+
 from .permissions import (
     eh_admin_ou_coordenador,
-    usuario_pode_acessar_pesquisa,
-    usuario_pode_acessar_participante,
     usuario_pode_acessar_documento,
+    usuario_pode_acessar_participante,
+    usuario_pode_acessar_pesquisa,
 )
 ## LOGICA DE LOGIN ##
 
