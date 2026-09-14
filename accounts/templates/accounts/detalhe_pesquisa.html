@@ -1,95 +1,302 @@
 {% extends 'accounts/base.html' %}
 {% load static %}
 
-{% block title %}Detalhe da Pesquisa - Projeto Integrador{% endblock %}
+{% block title %}Detalhe da Pesquisa | ClinSecure{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+>
+{% endblock %}
 
 {% block content %}
-<body>
+<div class="app-shell">
+    <aside class="sidebar" id="clinSidebar">
+        <a href="{% url 'home' %}" class="sidebar-brand">
+            <span class="brand-mark">
+                <i class="bi bi-shield-lock"></i>
+            </span>
+            <span>
+                <strong class="d-block">ClinSecure</strong>
+                <small class="opacity-75">Pesquisa segura</small>
+            </span>
+        </a>
 
-<h1>{{ pesquisa.nome }}</h1>
+        <nav class="sidebar-nav" aria-label="Navegação principal">
+            <div class="sidebar-label">Navegação</div>
 
-<p>
-    <strong>Registro:</strong>
-    {{ pesquisa.registro_pesquisa }}
-</p>
+            <a href="{% url 'home' %}" class="nav-link">
+                <i class="bi bi-grid-1x2"></i>
+                <span>Dashboard</span>
+            </a>
 
-<p>
-    <strong>Status:</strong>
-    {{ pesquisa.get_status_display }}
-</p>
+            <a
+                href="{% url 'lista_pesquisas' %}"
+                class="nav-link active"
+                aria-current="page"
+            >
+                <i class="bi bi-clipboard2-pulse"></i>
+                <span>Pesquisas</span>
+            </a>
 
-<p>
-    <strong>Descrição:</strong>
-    {{ pesquisa.descricao }}
-</p>
+            {% if request.user.perfil == "administrador" or request.user.perfil == "coordenador" %}
+                <a href="{% url 'cadastro' %}" class="nav-link">
+                    <i class="bi bi-people"></i>
+                    <span>Usuários</span>
+                </a>
+            {% endif %}
 
-<p>
-    <strong>Responsável:</strong>
-    {{ pesquisa.responsavel.username }}
-</p>
+            {% if request.user.perfil == "responsavel" %}
+                <a href="{% url 'cadastro_participante' %}" class="nav-link">
+                    <i class="bi bi-person-plus"></i>
+                    <span>Participantes</span>
+                </a>
+            {% endif %}
 
-{% if pesquisa.data_inicio %}
-<p>
-    <strong>Início:</strong>
-    {{ pesquisa.data_inicio }}
-</p>
-{% endif %}
+            {% if request.user.perfil == "responsavel" or request.user.perfil == "administrador" or request.user.perfil == "coordenador" %}
+                <a href="{% url 'upload_documento' %}" class="nav-link">
+                    <i class="bi bi-file-earmark-lock"></i>
+                    <span>Documentos</span>
+                </a>
+            {% endif %}
 
-{% if pesquisa.data_fim %}
-<p>
-    <strong>Fim:</strong>
-    {{ pesquisa.data_fim }}
-</p>
-{% endif %}
+            <div class="sidebar-label mt-3">Conta</div>
 
-<hr>
+            <a href="{% url 'password_reset' %}" class="nav-link">
+                <i class="bi bi-key"></i>
+                <span>Recuperar senha</span>
+            </a>
 
-<h2>Participantes</h2>
+            <a href="{% url 'logout' %}" class="nav-link">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Sair</span>
+            </a>
+        </nav>
+    </aside>
 
-{% if participacoes %}
+    <div class="main-wrapper">
+        <header class="topbar">
+            <div class="d-flex align-items-center gap-3">
+                <button
+                    class="btn btn-light border mobile-menu"
+                    type="button"
+                    id="sidebarToggle"
+                    aria-label="Abrir menu"
+                >
+                    <i class="bi bi-list fs-5"></i>
+                </button>
 
-    {% for participacao in participacoes %}
+                <div>
+                    <div class="eyebrow">Workspace</div>
+                    <h1 class="h5 mb-0 dashboard-title">
+                        Detalhe da pesquisa
+                    </h1>
+                </div>
+            </div>
 
-        <div>
-            <a href="{% url 'detalhe_participante' participacao.participante.id %}">
-    {{ participacao.participante.registro_participante }}
-</a>
+            <div class="d-flex align-items-center gap-2">
+                <div class="text-end d-none d-sm-block">
+                    <strong class="d-block small">
+                        {{ request.user.username }}
+                    </strong>
+                    <span class="text-muted small">
+                        {{ request.user.perfil|title }}
+                    </span>
+                </div>
 
-            <p>
-                <strong>Status:</strong>
-                {{ participacao.get_status_display }}
-            </p>
+                <span class="user-avatar" aria-hidden="true">
+                    {{ request.user.username|slice:":1"|upper }}
+                </span>
 
-            <p>
-                <strong>Entrada:</strong>
-                {{ participacao.data_entrada }}
-            </p>
+                <a
+                    href="{% url 'logout' %}"
+                    class="btn btn-outline-secondary btn-sm ms-2 d-none d-md-inline-flex"
+                >
+                    Sair
+                </a>
+            </div>
+        </header>
 
-            <a href="{% url 'detalhe_participante' participacao.participante.id %}">
-    {{ participacao.participante.registro_participante }}
-</a>
+        <main class="content-area">
+            <section class="welcome-card mb-4">
+                <div class="row align-items-center g-3">
+                    <div class="col-lg-8">
+                        <div class="small opacity-75 mb-2">
+                            Pesquisa clínica
+                        </div>
+                        <h2 class="h4 fw-bold mb-2">
+                            {{ pesquisa.nome }}
+                        </h2>
+                        <p class="mb-0 opacity-75">
+                            Registro {{ pesquisa.registro_pesquisa }}
+                            · {{ pesquisa.get_status_display }}
+                        </p>
+                    </div>
 
-        <br>
+                    <div class="col-lg-4 text-lg-end">
+                        <a
+                            href="{% url 'lista_pesquisas' %}"
+                            class="btn btn-light"
+                        >
+                            <i class="bi bi-arrow-left me-2"></i>
+                            Voltar para pesquisas
+                        </a>
+                    </div>
+                </div>
+            </section>
 
-<a href="{% url 'cadastrar_dado_pesquisa' participacao.id %}">
-    + Adicionar dado/exame
-</a>
+            <section class="row g-3 mb-4" aria-labelledby="informacoes-title">
+                <div class="col-lg-8">
+                    <article class="stat-card h-100">
+                        <div class="d-flex align-items-center gap-3 mb-4">
+                            <span class="stat-icon bg-primary-subtle text-primary">
+                                <i class="bi bi-info-circle"></i>
+                            </span>
+                            <div>
+                                <div class="eyebrow">Informações gerais</div>
+                                <h2 id="informacoes-title" class="h5 mb-0">
+                                    Sobre a pesquisa
+                                </h2>
+                            </div>
+                        </div>
 
-        </div>
+                        <p class="text-muted mb-4">
+                            {{ pesquisa.descricao|default:"Nenhuma descrição informada." }}
+                        </p>
 
-        <hr>
+                        <div class="row g-3">
+                            <div class="col-sm-6">
+                                <div class="small text-muted">Registro</div>
+                                <strong>{{ pesquisa.registro_pesquisa }}</strong>
+                            </div>
 
-    {% endfor %}
+                            <div class="col-sm-6">
+                                <div class="small text-muted">Status</div>
+                                <strong>{{ pesquisa.get_status_display }}</strong>
+                            </div>
 
-{% else %}
+                            <div class="col-sm-6">
+                                <div class="small text-muted">Responsável</div>
+                                <strong>{{ pesquisa.responsavel.username }}</strong>
+                            </div>
 
-    <p>Nenhum participante vinculado a esta pesquisa.</p>
+                            {% if pesquisa.data_inicio %}
+                                <div class="col-sm-6">
+                                    <div class="small text-muted">Início</div>
+                                    <strong>{{ pesquisa.data_inicio }}</strong>
+                                </div>
+                            {% endif %}
 
-{% endif %}
+                            {% if pesquisa.data_fim %}
+                                <div class="col-sm-6">
+                                    <div class="small text-muted">Fim</div>
+                                    <strong>{{ pesquisa.data_fim }}</strong>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </article>
+                </div>
 
-<a href="{% url 'lista_pesquisas' %}">
-    Voltar para pesquisas
-</a>
+                <div class="col-lg-4">
+                    <article class="stat-card h-100">
+                        <div class="d-flex align-items-center gap-3 mb-4">
+                            <span class="stat-icon bg-success-subtle text-success">
+                                <i class="bi bi-people"></i>
+                            </span>
+                            <div>
+                                <div class="eyebrow">Participação</div>
+                                <h2 class="h5 mb-0">Participantes</h2>
+                            </div>
+                        </div>
 
-</body>
+                        <div class="stat-value mb-2">
+                            {{ participacoes|length }}
+                        </div>
+                        <div class="stat-label">
+                            Participações vinculadas à pesquisa
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <section aria-labelledby="participantes-title">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <div class="eyebrow">Registros vinculados</div>
+                        <h2 id="participantes-title" class="h5 mb-0">
+                            Participantes da pesquisa
+                        </h2>
+                    </div>
+                </div>
+
+                {% if participacoes %}
+                    <div class="row g-3">
+                        {% for participacao in participacoes %}
+                            <div class="col-12 col-xl-6">
+                                <article class="stat-card h-100">
+                                    <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                                        <span class="stat-icon bg-info-subtle text-info">
+                                            <i class="bi bi-person-check"></i>
+                                        </span>
+                                        <span class="badge bg-info-subtle text-info">
+                                            {{ participacao.get_status_display }}
+                                        </span>
+                                    </div>
+
+                                    <h3 class="h5 mb-2">
+                                        <a
+                                            href="{% url 'detalhe_participante' participacao.participante.id %}"
+                                            class="text-decoration-none text-dark"
+                                        >
+                                            {{ participacao.participante.registro_participante }}
+                                        </a>
+                                    </h3>
+
+                                    <p class="text-muted small mb-3">
+                                        <strong>Data de entrada:</strong>
+                                        {{ participacao.data_entrada }}
+                                    </p>
+
+                                    <a
+                                        href="{% url 'cadastrar_dado_pesquisa' participacao.id %}"
+                                        class="btn btn-outline-primary btn-sm"
+                                    >
+                                        <i class="bi bi-plus-lg me-1"></i>
+                                        Adicionar dado/exame
+                                    </a>
+                                </article>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="stat-card text-center py-5">
+                        <i class="bi bi-people display-5 text-muted"></i>
+                        <h3 class="h5 mt-3">
+                            Nenhum participante vinculado
+                        </h3>
+                        <p class="text-muted mb-0">
+                            Esta pesquisa ainda não possui participantes cadastrados.
+                        </p>
+                    </div>
+                {% endif %}
+            </section>
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const sidebar = document.getElementById("clinSidebar");
+        const toggle = document.getElementById("sidebarToggle");
+
+        if (toggle && sidebar) {
+            toggle.addEventListener("click", function () {
+                sidebar.classList.toggle("show");
+            });
+        }
+    });
+</script>
 {% endblock %}
