@@ -1279,60 +1279,6 @@ def upload_documento_view(request):
 
     return HttpResponse("Documento enviado com sucesso.")
 
-    if request.user.perfil not in [
-        "responsavel",
-        "administrador",
-        "coordenador",
-    ]:
-        return HttpResponse("Acesso negado.", status=403)
-
-    if request.method != "POST":
-        return HttpResponse("Método não permitido.", status=405)
-
-    participante_id = request.POST.get("participante_id")
-    arquivo = request.FILES.get("arquivo")
-
-    if not participante_id or not arquivo:
-        return HttpResponse(
-            "Participante e arquivo são obrigatórios.",
-            status=400
-        )
-
-    try:
-        participante = Participante.objects.get(id=participante_id)
-    except Participante.DoesNotExist:
-        return HttpResponse(
-            "Participante não encontrado.",
-            status=404
-        )
-
-    if not usuario_pode_acessar_participante(
-        request.user,
-        participante
-    ):
-        return HttpResponse("Acesso negado.", status=403)
-
-    documento = Documento.objects.create(
-        participante=participante,
-        responsavel=request.user,
-        nome_original=arquivo.name,
-        arquivo_criptografado=encrypt_file(arquivo),
-        status="pendente"
-    )
-
-    AuditLog.objects.create(
-        usuario=request.user,
-        evento="Upload de documento",
-        ip=request.META.get("REMOTE_ADDR"),
-        resultado="Sucesso",
-        detalhes=(
-            f"Documento '{arquivo.name}' enviado para "
-            f"{participante.registro_participante}."
-        )
-    )
-
-    return HttpResponse("Documento enviado com sucesso.")
-
 
 
 @login_required
@@ -1485,62 +1431,6 @@ def conceder_acesso_documento_view(request, documento_id):
         "Acesso concedido com sucesso."
     )
 
-    if request.user.perfil not in [
-        "responsavel",
-        "administrador",
-        "coordenador",
-    ]:
-        return HttpResponse("Acesso negado.", status=403)
-
-    try:
-        documento = Documento.objects.get(id=documento_id)
-    except Documento.DoesNotExist:
-        return HttpResponse("Documento não encontrado.", status=404)
-
-    if not usuario_pode_acessar_participante(
-        request.user,
-        documento.participante
-    ):
-        return HttpResponse("Acesso negado.", status=403)
-
-    if request.method != "POST":
-        return HttpResponse("Método não permitido.", status=405)
-
-    usuario_id = request.POST.get("usuario_id")
-    inicio = request.POST.get("inicio_acesso")
-    fim = request.POST.get("fim_acesso")
-
-    if not usuario_id or not inicio or not fim:
-        return HttpResponse(
-            "Usuário, início e fim do acesso são obrigatórios.",
-            status=400
-        )
-
-    try:
-        usuario = Usuario.objects.get(id=usuario_id)
-    except Usuario.DoesNotExist:
-        return HttpResponse("Usuário não encontrado.", status=404)
-
-    Acesso.objects.create(
-        documento=documento,
-        usuario=usuario,
-        concedido_por=request.user,
-        inicio_acesso=inicio,
-        fim_acesso=fim,
-    )
-
-    AuditLog.objects.create(
-        usuario=request.user,
-        evento="Acesso a documento concedido",
-        ip=request.META.get("REMOTE_ADDR"),
-        resultado="Sucesso",
-        detalhes=(
-            f"Acesso ao documento '{documento.nome_original}' "
-            f"concedido para {usuario.username}."
-        )
-    )
-
-    return HttpResponse("Acesso concedido com sucesso.")
 
 
 @login_required
