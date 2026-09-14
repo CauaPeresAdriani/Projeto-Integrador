@@ -79,6 +79,8 @@
 
         <hr>
 
+
+{% endfor %}        
 <h2>Documentos</h2>
 
 {% if documentos %}
@@ -87,31 +89,25 @@
 
         <div>
             <strong>{{ documento.nome_original }}</strong>
-
+            <br>
             <a href="{% url 'download_documento' documento.id %}">
                 Baixar
             </a>
+            <br>
+            <br>
+            <a href="{% url 'visualizar_documento' documento.id %}">
+                Visualizar
+            </a>
         </div>
+        <hr>
 
     {% endfor %}
 
 {% else %}
-
     <p>Nenhum documento cadastrado.</p>
-
 {% endif %}
 
-    </div>
 
-    <hr>
-
-{% empty %}
-
-    <p>
-        Nenhum dado de pesquisa cadastrado.
-    </p>
-
-{% endfor %}
 
 <a href="{% url 'lista_pesquisas' %}">
     Voltar para pesquisas

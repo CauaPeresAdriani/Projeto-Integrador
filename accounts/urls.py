@@ -82,6 +82,12 @@ path(
     name='download_documento'
 ),
 path(
+    'documentos/<int:documento_id>/visualizar/',
+    views.visualizar_documento_view,
+    name='visualizar_documento'
+),
+
+path(
     'documentos/<int:documento_id>/acesso/',
     views.conceder_acesso_documento_view,
     name='conceder_acesso_documento'

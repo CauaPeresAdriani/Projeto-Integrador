@@ -1329,6 +1329,55 @@ def download_documento_view(request, documento_id):
             status=500
         )
 
+
+def visualizar_documento_view(request, documento_id):
+    
+    try:
+        documento = Documento.objects.get(id=documento_id)
+    except Documento.DoesNotExist:
+        return HttpResponse("Documento não encontrado.", status=404)
+
+    if not usuario_pode_acessar_documento(
+        request.user,
+        documento
+    ):
+        return HttpResponse("Acesso negado.", status=403)
+
+    try:
+        documento.arquivo_criptografado.open("rb")
+
+        arquivo = decrypt_file(
+            documento.arquivo_criptografado
+        )
+
+        response = HttpResponse(
+            arquivo.getvalue(),
+            content_type="application/pdf"
+        )
+
+        response["Content-Disposition"] = (
+            f'inline; filename="{documento.nome_original}"'
+        )
+
+        AuditLog.objects.create(
+            usuario=request.user,
+            evento="visualização de documento",
+            ip=request.META.get("REMOTE_ADDR"),
+            resultado="Sucesso",
+            detalhes=(
+                f"Documento '{documento.nome_original}' acessado."
+            )
+        )
+
+        return response
+
+    except Exception:
+        return HttpResponse(
+            "Erro ao descriptografar o documento.",
+            status=500
+        )
+
+
 @login_required
 def conceder_acesso_documento_view(request, documento_id):
     if request.user.perfil not in [
