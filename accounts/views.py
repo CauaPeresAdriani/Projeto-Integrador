@@ -917,11 +917,6 @@ def verificar_2fa_view(request):
 
 @login_required
 def home_view(request):
-    """
-    View do Dashboard.
-    Envia os indicadores com base no perfil do usuário, 
-    respeitando as regras de visualização existentes.
-    """
     context = {}
     usuario = request.user
     
@@ -947,7 +942,12 @@ def home_view(request):
     elif usuario.perfil == 'participante':
         context['minhas_pesquisas'] = ParticipacaoPesquisa.objects.filter(participante__usuario=usuario, status='ativo').count()
         context['meus_documentos'] = Documento.objects.filter(participante__usuario=usuario).count()
-
+        participante = Participante.objects.filter(usuario = request.user).first()
+        if participante:
+            nome_participante = decrypt_data(participante.nome_encrypted)
+        else:
+            nome_participante = request.user.username
+        context['nome_participante'] = nome_participante
     return render(request, 'accounts/home.html', context)
 
 
@@ -1543,7 +1543,7 @@ def revogar_acesso_documento_view(request, acesso_id):
 
 @login_required
 def lista_pesquisas_view(request):
-
+    context = {}
     usuario = request.user
 
     if eh_admin_ou_coordenador(usuario):
@@ -1551,13 +1551,16 @@ def lista_pesquisas_view(request):
 
     elif usuario.perfil == "responsavel":
         pesquisas = Pesquisa.objects.filter(
-            responsavel=usuario
+            responsavel=usuario  
         )
 
     elif usuario.perfil == "participante":
         pesquisas = Pesquisa.objects.filter(
             participantes__participante__usuario=usuario
         ).distinct()
+        context['minhas_pesquisas'] = ParticipacaoPesquisa.objects.filter(participante__usuario=usuario, status='ativo').count()
+        context['meus_documentos'] = Documento.objects.filter(participante__usuario=usuario).count()
+        participante = Participante.objects.filter(usuario = request.user).first()
 
     elif usuario.perfil == "pesquisador":
         pesquisas = Pesquisa.objects.all()

@@ -1,96 +1,250 @@
-<!DOCTYPE html>
-<html lang="pt-br">
+{% extends 'accounts/base.html' %}
+{% load static %}
 
-<head>
-    <meta charset="UTF-8">
-    <title>Novo dado - ClinSecure</title>
-</head>
+{% block title %}Pesquisas | ClinSecure{% endblock %}
 
-<body>
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+>
+{% endblock %}
 
-<h1>Cadastrar dado da pesquisa</h1>
+{% block content %}
+<div class="app-shell">
+    <aside class="sidebar" id="clinSidebar">
+        <a href="{% url 'home' %}" class="sidebar-brand">
+            <span class="brand-mark">
+                <i class="bi bi-shield-lock"></i>
+            </span>
+            <span>
+                <strong class="d-block">ClinSecure</strong>
+                <small class="opacity-75">Pesquisa segura</small>
+            </span>
+        </a>
 
-<p>
-    <strong>Participante:</strong>
-    {{ participacao.participante.registro_participante }}
-</p>
+        <nav class="sidebar-nav" aria-label="Navegação principal">
+            <div class="sidebar-label">Navegação</div>
 
-<p>
-    <strong>Pesquisa:</strong>
-    {{ participacao.pesquisa.nome }}
-</p>
+            <a href="{% url 'home' %}" class="nav-link">
+                <i class="bi bi-grid-1x2"></i>
+                <span>Dashboard</span>
+            </a>
 
-<hr>
+            <a href="{% url 'lista_pesquisas' %}" class="nav-link active" aria-current="page">
+                <i class="bi bi-clipboard2-pulse"></i>
+                <span>Pesquisas</span>
+            </a>
 
-{% if erro %}
-    <p style="color: red;">
-        {{ erro }}
-    </p>
-{% endif %}
+            {% if request.user.perfil == "administrador" or request.user.perfil == "coordenador" %}
+                <a href="{% url 'cadastro' %}" class="nav-link">
+                    <i class="bi bi-people"></i>
+                    <span>Usuários</span>
+                </a>
+            {% endif %}
 
-<form method="POST">
+            {% if request.user.perfil == "responsavel" %}
+                <a href="{% url 'cadastro_participante' %}" class="nav-link">
+                    <i class="bi bi-person-plus"></i>
+                    <span>Participantes</span>
+                </a>
+            {% endif %}
 
-    {% csrf_token %}
+            {% if request.user.perfil == "responsavel" or request.user.perfil == "administrador" or request.user.perfil == "coordenador" %}
+                <a href="{% url 'upload_documento' %}" class="nav-link">
+                    <i class="bi bi-file-earmark-lock"></i>
+                    <span>Documentos</span>
+                </a>
+            {% endif %}
 
-    <label for="tipo">
-        Tipo de exame/dado:
-    </label>
+            <div class="sidebar-label mt-3">Conta</div>
 
-    <br>
+            <a href="{% url 'password_reset' %}" class="nav-link">
+                <i class="bi bi-key"></i>
+                <span>Recuperar senha</span>
+            </a>
 
-    <input
-        type="text"
-        id="tipo"
-        name="tipo"
-        placeholder="Ex.: Sequenciamento genético"
-        required
-    >
+            <a href="{% url 'logout' %}" class="nav-link">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Sair</span>
+            </a>
+        </nav>
+    </aside>
 
-    <br><br>
+    <div class="main-wrapper">
+         <header class="topbar">
+            <div class="d-flex align-items-center gap-3">
+                <button
+                    class="btn btn-light border mobile-menu"
+                    type="button"
+                    id="sidebarToggle"
+                    aria-label="Abrir menu"
+                >
+                    <i class="bi bi-list fs-5"></i>
+                </button>
 
-    <label for="data_coleta">
-        Data da coleta:
-    </label>
+                <div>
+                    <div class="eyebrow">Workspace</div>
+                    <h1 class="h5 mb-0 dashboard-title">Dados</h1>
+                </div>
+            </div>
 
-    <br>
+            <div class="d-flex align-items-center gap-2">
+                <div class="text-end d-none d-sm-block">
+                    <strong class="d-block small">
+                        {{ request.user.username }}
+                    </strong>
+                    <span class="text-muted small">
+                        {{ request.user.perfil|title }}
+                    </span>
+                </div>
 
-    <input
-        type="date"
-        id="data_coleta"
-        name="data_coleta"
-    >
+                <span class="user-avatar" aria-hidden="true">
+                    {{ request.user.username|slice:":1"|upper }}
+                </span>
 
-    <br><br>
+                <a
+                    href="{% url 'logout' %}"
+                    class="btn btn-outline-secondary btn-sm ms-2 d-none d-md-inline-flex"
+                >
+                    Sair
+                </a>
+            </div>
+        </header>
 
-    <label for="resultado">
-        Resultado:
-    </label>
+        <main class="content-area">
+            <section class="welcome-card mb-4">
+                <div class="row align-items-center g-3">
+                    <div class="col-lg-8">
+                        <div class="small opacity-75 mb-2">
+                            Cadastrar dados da pesquisa
+                        </div>
+                        
+                        <p class="h4 fw-bold mb-2">
+                            <strong>Participante:</strong>
+                            {{ participacao.participante.registro_participante }}
+                        </p>
 
-    <br>
+                        <p class="mb-0 opacity-75">
+                            <strong>Pesquisa:</strong>
+                            {{ participacao.pesquisa.nome }}
+                        </p>
 
-    <textarea
-        id="resultado"
-        name="resultado"
-        rows="8"
-        cols="60"
-        placeholder="Digite o resultado..."
-        required
-    ></textarea>
+                        {% if erro %}
+                            <p style="color: red;">
+                                {{ erro }}
+                            </p>
+                        {% endif %}
 
-    <br><br>
+                    </div>
 
-    <button type="submit">
-        Salvar resultado
-    </button>
+                    <div class="col-lg-4 text-lg-end">
+                        <a href="{% url 'home' %}" class="btn btn-light">
+                            <i class="bi bi-arrow-left me-2"></i>
+                            Voltar ao dashboard
+                        </a>
+                    </div>
+                </div>
+            </section>
 
-</form>
+            <section aria-labelledby="pesquisas-title">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <div class="eyebrow">Registros autorizados</div>
+                        <h2 id="pesquisas-title" class="h5 mb-0">
+                            Adicionar Dados e Exames:
+                        </h2>
+                    </div>
+                </div>
+                
 
-<br>
 
-<a href="{% url 'detalhe_participante' participacao.participante.id %}">
-    Voltar para participante
-</a>
+                    <div class="card shadow p-4 dados-card" >
+                    
+                        <h2 class="login-title">Adicionar dados para participante</h2>
 
-</body>
+                        <form method="POST">
+                            {% csrf_token %}
 
-</html>
+                            <div class="form-group">
+
+                                <label for="tipo" class="labels">
+                                    Tipo de exame/dado:
+                                </label>
+
+                                <br>
+
+                                <input
+                                    type="text"
+                                    id="tipo"
+                                    name="tipo"
+                                    placeholder="Ex.: Sequenciamento genético"
+                                    required
+                                    class="inputs"
+                                >
+
+                            </div>
+
+                            <br><br>
+
+                            <div class="form-group">
+
+                                <label for="data_coleta">
+                                    Data da coleta:
+                                </label>
+
+                                <br>
+
+                                <input
+                                    type="date"
+                                    id="data_coleta"
+                                    name="data_coleta"
+                                    class="inputs"
+                                >
+
+
+                            </div>
+                           
+                            <br><br>
+
+                            <div class="form-group">
+
+                                <label for="resultado">
+                                    Resultado:
+                                </label>
+
+                                <br>
+
+                                <textarea
+                                    id="resultado"
+                                    name="resultado"
+                                    rows="8"
+                                    cols="60"
+                                    placeholder="Digite o resultado..."
+                                    required
+                                    class="inputs"
+                                    
+                                ></textarea>
+                            </div>
+
+                            <br><br>
+
+                            <button class="btn-submit" type="submit">
+                                Salvar resultado
+                            </button>
+
+                        </form>
+                    </div>
+                </div>       
+            </section>
+        </main>
+
+    </div>
+
+
+
+</div>
+
+    
+
+{% endblock %}
