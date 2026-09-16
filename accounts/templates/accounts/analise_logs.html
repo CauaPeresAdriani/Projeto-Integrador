@@ -1,0 +1,143 @@
+{% extends 'accounts/base.html' %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <h2>Análise dos Logs de Auditoria</h2>
+
+    <p>
+        Esta página apresenta um resumo dos eventos registrados
+        pelo sistema de auditoria.
+    </p>
+
+    <hr>
+
+    <!-- Análise dos eventos -->
+    <h4>Eventos registrados</h4>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Evento</th>
+                <th>Quantidade</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for item in eventos %}
+            <tr>
+                <td>{{ item.evento }}</td>
+                <td>{{ item.total }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="2">
+                    Nenhum evento registrado.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <hr>
+
+    <!-- Análise dos resultados -->
+    <h4>Resultados dos eventos</h4>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Resultado</th>
+                <th>Quantidade</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for item in resultados %}
+            <tr>
+                <td>{{ item.resultado }}</td>
+                <td>{{ item.total }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="2">
+                    Nenhum resultado registrado.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <hr>
+
+    <!-- Últimos registros -->
+    <h4>Últimos registros</h4>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Usuário</th>
+                <th>Evento</th>
+                <th>Data e hora</th>
+                <th>Resultado</th>
+                <th>IP</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for log in ultimos_logs %}
+            <tr>
+                <td>
+                    {% if log.usuario %}
+                        {{ log.usuario.username }}
+                    {% else %}
+                        Sistema
+                    {% endif %}
+                </td>
+
+                <td>{{ log.evento }}</td>
+
+                <td>{{ log.data_hora|date:"d/m/Y H:i:s" }}</td>
+
+                <td>{{ log.resultado }}</td>
+
+                <td>
+                    {% if log.ip %}
+                        {{ log.ip }}
+                    {% else %}
+                        Não informado
+                    {% endif %}
+                </td>
+            </tr>
+
+            {% empty %}
+            <tr>
+                <td colspan="5">
+                    Nenhum log registrado.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <hr>
+
+    <!-- Exemplo de análise -->
+    <h4>Exemplo de análise</h4>
+
+    <p>
+        A análise dos logs permite identificar a quantidade de eventos
+        realizados no sistema, verificar resultados de sucesso ou falha
+        e consultar os registros mais recentes.
+    </p>
+
+    <p>
+        Esses dados podem auxiliar na identificação de tentativas de
+        acesso, falhas de autenticação, alterações e outras atividades
+        relevantes para a segurança do sistema.
+    </p>
+
+</div>
+
+{% endblock %}

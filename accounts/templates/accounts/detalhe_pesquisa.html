@@ -134,15 +134,27 @@
                         </p>
                     </div>
 
-                    <div class="col-lg-4 text-lg-end">
-                        <a
-                            href="{% url 'lista_pesquisas' %}"
-                            class="btn btn-light"
-                        >
-                            <i class="bi bi-arrow-left me-2"></i>
-                            Voltar para pesquisas
-                        </a>
-                    </div>
+                   <div class="col-lg-4 text-lg-end">
+
+    {% if request.user.perfil == "responsavel" and request.user.id == pesquisa.responsavel.id %}
+        <a
+            href="{% url 'editar_pesquisa' pesquisa.id %}"
+            class="btn btn-primary me-2"
+        >
+            <i class="bi bi-pencil me-2"></i>
+            Editar pesquisa
+        </a>
+    {% endif %}
+
+    <a
+        href="{% url 'lista_pesquisas' %}"
+        class="btn btn-light"
+    >
+        <i class="bi bi-arrow-left me-2"></i>
+        Voltar para pesquisas
+    </a>
+
+</div>
                 </div>
             </section>
 

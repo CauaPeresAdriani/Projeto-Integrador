@@ -36,6 +36,7 @@ class Usuario(AbstractUser):
 
 
 class AuditLog(models.Model):
+
     usuario = models.ForeignKey(
         Usuario,
         on_delete=models.SET_NULL,
@@ -45,6 +46,7 @@ class AuditLog(models.Model):
     )
 
     evento = models.CharField(max_length=100)
+
     data_hora = models.DateTimeField(auto_now_add=True)
 
     ip = models.GenericIPAddressField(
@@ -53,11 +55,29 @@ class AuditLog(models.Model):
     )
 
     resultado = models.CharField(max_length=100)
+
     detalhes = models.TextField()
 
     def __str__(self):
         usuario = self.usuario.username if self.usuario else 'Sistema'
         return f"{usuario} - {self.evento} - {self.data_hora}"
+
+    def save(self, *args, **kwargs):
+        # Permite criar novos logs.
+        if self.pk is not None:
+            # Impede alterar um log que já existe.
+            if AuditLog.objects.filter(pk=self.pk).exists():
+                raise ValueError(
+                 
+                )
+
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        # Impede excluir logs de auditoria.
+        raise ValueError(
+        
+        )
 
 
 class Participante(models.Model):
@@ -91,12 +111,15 @@ class Participante(models.Model):
 
 
 class Pesquisa(models.Model):
+
     registro_pesquisa = models.CharField(
         max_length=30,
         unique=True
     )
 
-    nome = models.CharField(max_length=150)
+    nome = models.CharField(
+        max_length=150
+    )
 
     descricao = models.TextField(
         blank=True
@@ -124,10 +147,18 @@ class Pesquisa(models.Model):
     )
 
     responsavel = models.ForeignKey(
-    Usuario,
-    on_delete=models.PROTECT,
-    related_name='pesquisas_responsavel',
-    limit_choices_to={'perfil': 'responsavel'}
+        Usuario,
+        on_delete=models.PROTECT,
+        related_name='pesquisas_responsavel',
+        limit_choices_to={'perfil': 'responsavel'}
+    )
+
+    # Pesquisadores que têm acesso a esta pesquisa.
+    pesquisadores = models.ManyToManyField(
+        Usuario,
+        related_name='pesquisas_pesquisador',
+        blank=True,
+        limit_choices_to={'perfil': 'pesquisador'}
     )
 
     def __str__(self):
