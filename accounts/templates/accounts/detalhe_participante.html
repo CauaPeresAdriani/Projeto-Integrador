@@ -1,130 +1,279 @@
-<!DOCTYPE html>
-<html lang="pt-br">
+{% extends 'accounts/base.html' %}
+{% load static %}
 
-<head>
-    <meta charset="UTF-8">
-    <title>Participante - ClinSecure</title>
-</head>
+{% block title %}Dashboard | ClinSecure{% endblock %}
 
-<body>
+{% block extra_css %}
 
-<h1>
-    Participante {{ participante.registro_participante }}
-</h1>
 
-<hr>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+{% endblock %}
 
-<h2>Informações para pesquisa</h2>
+{% block content %}
 
-<p>
-    <strong>Registro:</strong>
-    {{ participante.registro_participante }}
-</p>
 
-<p>
-    <strong>Faixa etária:</strong>
-    {{ faixa_etaria }}
-</p>
+<div class="app-shell">
 
-<hr>
-
-<h2>Pesquisas</h2>
-
-{% for participacao in participacoes %}
-
-    <p>
-        <strong>Pesquisa:</strong>
-        <a href="{% url 'detalhe_pesquisa' participacao.pesquisa.id %}">
-            {{ participacao.pesquisa.nome }}
+    <aside class="sidebar" id="clinSidebar">
+        <a href="{% url 'home' %}" class="sidebar-brand">
+            <span class="brand-mark">
+                <i class="bi bi-shield-lock"></i>
+            </span>
+            <span>
+                <strong class="d-block">ClinSecure</strong>
+                <small class="opacity-75">Pesquisa segura</small>
+            </span>
         </a>
-    </p>
 
-    <p>
-        <strong>Status:</strong>
-        {{ participacao.get_status_display }}
-    </p>
+        <nav class="sidebar-nav">
+            <div class="sidebar-label">Navegação</div>
 
-{% empty %}
+            <a href="{% url 'home' %}" class="nav-link active">
+                <i class="bi bi-grid-1x2"></i>
+                <span>Dashboard</span>
+            </a>
 
-    <p>Nenhuma pesquisa vinculada.</p>
+            <a href="{% url 'lista_pesquisas' %}" class="nav-link">
+                <i class="bi bi-clipboard2-pulse"></i>
+                <span>Pesquisas</span>
+            </a>
 
-{% endfor %}
+            {% if request.user.perfil == "administrador" or request.user.perfil == "coordenador" %}
+            <a href="{% url 'cadastro' %}" class="nav-link">
+                <i class="bi bi-people"></i>
+                <span>Usuários</span>
+            </a>
+            {% endif %}
 
-<hr>
+            {% if request.user.perfil == "responsavel" %}
+            <a href="{% url 'cadastro_participante' %}" class="nav-link">
+                <i class="bi bi-person-plus"></i>
+                <span>Participantes</span>
+            </a>
+            {% endif %}
 
-<h2>Dados da pesquisa</h2>
+            {% if request.user.perfil == "responsavel" or request.user.perfil == "administrador"%}
+            <a href="{% url 'upload_documento' %}" class="nav-link">
+                <i class="bi bi-file-earmark-lock"></i>
+                <span>Documentos</span>
+            </a>
+            {% endif %}
+            {% if request.user.perfil == "coordenador" %}
+            <a href="{% url 'upload_documento' %}" class="nav-link">
+                <i class="bi bi-file-earmark-lock"></i>
+                <span>Documentos</span>
+            </a>
+            {% endif %}
 
-{% for dado in dados %}
 
-    <div>
+            <div class="sidebar-label mt-3">Conta</div>
 
-        <h3>{{ dado.tipo }}</h3>
+            <a href="{% url 'password_reset' %}" class="nav-link">
+                <i class="bi bi-key"></i>
+                <span>Recuperar senha</span>
+            </a>
 
-        <p>
-            <strong>Pesquisa:</strong>
-            {{ dado.pesquisa.nome }}
-        </p>
+            <a href="{% url 'meus_dados' %}" class="nav-link">
+                <i class="bi bi-lock"></i>
+                <span>Meus dados</span>
+            </a>
 
-        {% if dado.data_coleta %}
+            <a href="{% url 'logout' %}" class="nav-link">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Sair</span>
+            </a>
+        </nav>
+    </aside>
+
+    <div class="main-wrapper">
+
+        <header class="topbar">
+            <div class="d-flex align-items-center gap-3">
+                <button class="btn btn-light border mobile-menu" type="button" id="sidebarToggle"
+                    aria-label="Abrir menu">
+                    <i class="bi bi-list fs-5"></i>
+                </button>
+
+                <div>
+                    <div class="eyebrow">Workspace</div>
+                    <h1 class="h5 mb-0 dashboard-title">Detalhes participante</h1>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+                <div class="text-end d-none d-sm-block">
+                    <strong class="d-block small">
+                        {{ request.user.username }}
+                    </strong>
+                    <span class="text-muted small">
+                        {{ request.user.perfil|title }}
+                    </span>
+                </div>
+
+                <span class="user-avatar" aria-hidden="true">
+                    {{ request.user.username|slice:":1"|upper }}
+                </span>
+
+                <a href="{% url 'logout' %}" class="btn btn-outline-secondary btn-sm ms-2 d-none d-md-inline-flex">
+                    Sair
+                </a>
+            </div>
+        </header>
+
+        <main class="content-area">
+
+            <section class="welcome-card mb-4">
+                <div class="row align-items-center g-3">
+                    <div class="col-lg-8">
+                        <div class="small opacity-75 mb-2">Bem-vindo ao ClinSecure</div>
+                        {% if request.user.perfil == "participante" %}
+                        <h2 class="h4 fw-bold mb-2"> Olá, {{ nome_participante }} </h2>
+                        <h2 class="h4 fw-bold mb-2"> Seu registro de participante é: {{ registro_participante }}</h2>
+                        {% else %}
+                        <h2 class="h4 fw-bold mb-2"> Olá, {{ request.user.username }} </h2>
+                        {% endif %}
+                        <p class="mb-0 opacity-75">
+                            Acompanhe as informações disponíveis para o seu perfil
+                            com segurança e organização.
+                        </p>
+                    </div>
+
+                    <div class="col-lg-4 text-lg-end">
+                        <a href="{% url 'lista_pesquisas' %}" class="btn btn-light">
+                            <i class="bi bi-clipboard2-pulse me-2"></i>
+                            Ver pesquisas
+                        </a>
+                    </div>
+                </div>
+            </section>
             <p>
-                <strong>Data da coleta:</strong>
-                {{ dado.data_coleta }}
+                <strong>Registro:</strong>
+                {{ participante.registro_participante }}
             </p>
-        {% endif %}
 
-        <p>
-            <strong>Resultado:</strong>
-            {{ dado.resultado }}
-        </p>
+            <p>
+                <strong>Faixa etária:</strong>
+                {{ faixa_etaria }}
+            </p>
 
-        <hr>
+            {% for participacao in participacoes %}
 
+            <p>
+                <strong>Pesquisa:</strong>
+                <a href="{% url 'detalhe_pesquisa' participacao.pesquisa.id %}">
+                    {{ participacao.pesquisa.nome }}
+                </a>
+            </p>
 
-{% endfor %}        
-<h2>Documentos</h2>
+            <p>
+                <strong>Status:</strong>
+                {{ participacao.get_status_display }}
+            </p>
 
-{% if documentos %}
+            {% empty %}
 
-    {% for documento in documentos %}
+            <p>Nenhuma pesquisa vinculada.</p>
 
-        <div>
-            <strong>{{ documento.nome_original }}</strong>
-            <br>
-            <a href="{% url 'download_documento' documento.id %}">
-                Baixar
-            </a>
-            <br>
-            <br>
-            <a href="{% url 'visualizar_documento' documento.id %}">
-                Visualizar
-            </a>
-            <br>
-            <br>
-            <a href="{% url 'conceder_acesso_documento' documento.id %}">conceder acesso documentos</a>
-        </div>
-        <hr>
-
-    {% endfor %}
-
-{% else %}
-    <p>Nenhum documento cadastrado.</p>
-{% endif %}
+            {% endfor %}
 
 
+            <h2>Dados da pesquisa</h2>
+            <div class="card shadow p-4 dados-card">
+                {% for dado in dados %}
+                <div class="stat-card">
 
-<a href="{% url 'lista_pesquisas' %}">
-    Voltar para pesquisas
-</a>
-<form method="post"
-      action="{% url 'revogar_acesso_documento' 1 %}">
+                    <h3>{{ dado.tipo }}</h3>
 
-    {% csrf_token %}
+                    <p>
+                        <strong>Pesquisa:</strong>
+                        {{ dado.pesquisa.nome }}
+                    </p>
 
-    <button type="submit">
-        Revogar acesso
-    </button>
+                    {% if dado.data_coleta %}
+                    <p>
+                        <strong>Data da coleta:</strong>
+                        {{ dado.data_coleta }}
+                    </p>
+                    {% endif %}
 
-</form>
-</body>
+                    <p>
+                        <strong>Resultado:</strong>
+                        {{ dado.resultado }}
+                    </p>
 
-</html>
+                    <hr>
+
+                </div>
+                {% endfor %}
+
+
+
+
+
+
+
+            </div>
+            <h2>Documentos</h2>
+
+            {% if documentos %}
+            <div class="card-shadow p-4 dados-card">
+
+                {% for documento in documentos %}
+
+                <div class="stat-card">
+                    <div class="form-group">
+                        <strong class="login-title">{{ documento.nome_original }}</strong>
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <form method="post" action="{% url 'revogar_acesso_documento' 1 %}">
+                            {% csrf_token %}
+                            <a class="btn-warning" type="submit">
+                                Revogar acesso
+                            </a>
+                        </form>
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <a class="btn-submit" href="{% url 'download_documento' documento.id %}">
+                            Baixar
+                        </a>
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <a class="btn-submit" href="{% url 'visualizar_documento' documento.id %}">
+                            Visualizar
+                        </a>
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <a href="{% url 'conceder_acesso_documento' documento.id %}">conceder acesso documentos</a>
+
+                    </div>
+
+
+                </div>
+                <hr>
+
+                {% endfor %}
+
+                {% else %}
+                <p>Nenhum documento cadastrado.</p>
+                {% endif %}
+
+
+
+            </div>
+
+        </main>
+    </div>
+</div>
+{% endblock %}
