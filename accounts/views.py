@@ -942,9 +942,11 @@ def home_view(request):
     elif usuario.perfil == 'participante':
         context['minhas_pesquisas'] = ParticipacaoPesquisa.objects.filter(participante__usuario=usuario, status='ativo').count()
         context['meus_documentos'] = Documento.objects.filter(participante__usuario=usuario).count()
+
         participante = Participante.objects.filter(usuario = request.user).first()
         if participante:
             nome_participante = decrypt_data(participante.nome_encrypted)
+            context['registro_participante'] = participante.registro_participante
         else:
             nome_participante = request.user.username
         context['nome_participante'] = nome_participante
