@@ -113,9 +113,11 @@
                 <div class="row align-items-center g-3">
                     <div class="col-lg-8">
                         <div class="small opacity-75 mb-2">Bem-vindo ao ClinSecure</div>
-                        <h2 class="h4 fw-bold mb-2">
-                            Olá, {{ nome_participante }}
-                        </h2>
+                        {% if perfil == "participante" %} 
+                        <h2 class="h4 fw-bold mb-2"> Olá, {{ nome_participante }} </h2> 
+                        {% else %} 
+                        <h2 class="h4 fw-bold mb-2"> Olá, {{ request.user.username }} </h2> 
+                        {% endif %}
                         <p class="mb-0 opacity-75">
                             Acompanhe as informações disponíveis para o seu perfil
                             com segurança e organização.

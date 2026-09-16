@@ -1,151 +1,308 @@
 {% extends 'accounts/base.html' %}
 {% load static %}
 
-{% block title %}Cadastrar participante - ClinSecure{% endblock %}
+{% block title %}Detalhe da Pesquisa | ClinSecure{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+>
+{% endblock %}
 
 {% block content %}
 
-<header class="header">
-    <div class="profile">
-        <img src="{% static 'img/Profile.webp' %}" alt="Logo ClinSecure">
-        <h2>ClinSecure</h2>
-    </div>
+<div class="app-shell">
 
-    <nav aria-label="Navegação principal">
-        <a href="{% url 'home' %}">Início</a>
-        <a href="{% url 'logout' %}">Sair</a>
-    </nav>
-</header>
+    <aside class="sidebar" id="clinSidebar">
+        <a href="{% url 'home' %}" class="sidebar-brand">
+            <span class="brand-mark">
+                <i class="bi bi-shield-lock"></i>
+            </span>
+            <span>
+                <strong class="d-block">ClinSecure</strong>
+                <small class="opacity-75">Pesquisa segura</small>
+            </span>
+        </a>
 
-<div class="login-container">
+        <nav class="sidebar-nav" aria-label="Navegação principal">
+            <div class="sidebar-label">Navegação</div>
 
-    <div class="card shadow p-4 login-card">
+            <a href="{% url 'home' %}" class="nav-link">
+                <i class="bi bi-grid-1x2"></i>
+                <span>Dashboard</span>
+            </a>
 
-        <h2 class="login-title">
-            Cadastro de participante
-        </h2>
-
-        <form method="POST">
-
-            {% csrf_token %}
-
-            <div class="form-group">
-                <label for="nome" class="labels">
-                    Nome completo
-                </label>
-
-                <input
-                    type="text"
-                    name="nome"
-                    id="nome"
-                    class="inputs"
-                    autocomplete="name"
-                    required
-                >
-            </div>
-
-            <div class="form-group">
-                <label for="cpf" class="labels">
-                    CPF
-                </label>
-
-                <input
-                    type="text"
-                    name="cpf"
-                    id="cpf"
-                    class="inputs"
-                    inputmode="numeric"
-                    maxlength="14"
-                    placeholder="000.000.000-00"
-                    autocomplete="off"
-                    required
-                >
-            </div>
-
-            <div class="form-group">
-                <label for="data_nascimento" class="labels">
-                    Data de nascimento
-                </label>
-
-                <input
-                    type="date"
-                    name="data_nascimento"
-                    id="data_nascimento"
-                    class="inputs"
-                    autocomplete="bday"
-                    required
-                >
-            </div>
-
-            <div class="form-group">
-                <label for="email" class="labels">
-                    E-mail
-                </label>
-
-                <input
-                    type="email"
-                    name="email"
-                    id="email"
-                    class="inputs"
-                    autocomplete="email"
-                    placeholder="participante@email.com"
-                    required
-                >
-            </div>
-
-            <div class="form-group">
-
-                <label for="pesquisa" class="labels">
-                    Pesquisa
-                </label>
-
-                <select
-                    name="pesquisa"
-                    id="pesquisa"
-                    class="inputs"
-                    required
-                >
-
-                    <option value="">
-                        Selecione uma pesquisa
-                    </option>
-
-                    {% for pesquisa in pesquisas %}
-
-                        <option value="{{ pesquisa.id }}">
-                            {{ pesquisa.registro_pesquisa }} -
-                            {{ pesquisa.nome }}
-                        </option>
-
-                    {% endfor %}
-
-                </select>
-
-            </div>
-
-            <p class="privacy-note">
-                Os dados pessoais informados serão protegidos
-                antes de serem armazenados.
-            </p>
-
-            <button
-                type="submit"
-                class="btn-submit"
+            <a
+                href="{% url 'lista_pesquisas' %}"
+                class="nav-link active"
+                aria-current="page"
             >
-                Cadastrar participante
-            </button>
+                <i class="bi bi-clipboard2-pulse"></i>
+                <span>Pesquisas</span>
+            </a>
 
-        </form>
+            {% if request.user.perfil == "administrador" or request.user.perfil == "coordenador" %}
+                <a href="{% url 'cadastro' %}" class="nav-link">
+                    <i class="bi bi-people"></i>
+                    <span>Usuários</span>
+                </a>
+            {% endif %}
 
-        {% if erro %}
+            {% if request.user.perfil == "responsavel" %}
+                <a href="{% url 'cadastro_participante' %}" class="nav-link">
+                    <i class="bi bi-person-plus"></i>
+                    <span>Participantes</span>
+                </a>
+            {% endif %}
 
-            <div class="alert-error" role="alert">
-                {{ erro }}
+            {% if request.user.perfil == "responsavel" or request.user.perfil == "administrador" or request.user.perfil == "coordenador" %}
+                <a href="{% url 'upload_documento' %}" class="nav-link">
+                    <i class="bi bi-file-earmark-lock"></i>
+                    <span>Documentos</span>
+                </a>
+            {% endif %}
+
+            <div class="sidebar-label mt-3">Conta</div>
+
+            <a href="{% url 'password_reset' %}" class="nav-link">
+                <i class="bi bi-key"></i>
+                <span>Recuperar senha</span>
+            </a>
+
+            <a href="{% url 'logout' %}" class="nav-link">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Sair</span>
+            </a>
+        </nav>
+    </aside>
+
+    <div class="main-wrapper">
+        <header class="topbar">
+            <div class="d-flex align-items-center gap-3">
+                <button
+                    class="btn btn-light border mobile-menu"
+                    type="button"
+                    id="sidebarToggle"
+                    aria-label="Abrir menu"
+                >
+                    <i class="bi bi-list fs-5"></i>
+                </button>
+
+                <div>
+                    <div class="eyebrow">Workspace</div>
+                    <h1 class="h5 mb-0 dashboard-title">
+                        Cadastro de participantes
+                    </h1>
+                </div>
             </div>
 
-        {% endif %}
+            <div class="d-flex align-items-center gap-2">
+                <div class="text-end d-none d-sm-block">
+                    <strong class="d-block small">
+                        {{ request.user.username }}
+                    </strong>
+                    <span class="text-muted small">
+                        {{ request.user.perfil|title }}
+                    </span>
+                </div>
+
+                <span class="user-avatar" aria-hidden="true">
+                    {{ request.user.username|slice:":1"|upper }}
+                </span>
+
+                <a
+                    href="{% url 'logout' %}"
+                    class="btn btn-outline-secondary btn-sm ms-2 d-none d-md-inline-flex"
+                >
+                    Sair
+                </a>
+            </div>
+        </header>
+        
+        <main class="content-area">
+
+            <section class="welcome-card mb-4">
+
+                <div class="row align-items-center g-3">
+                    <div class="col-lg-8">
+                        <div class="small opacity-75 mb-2">
+                            Cadastrar dados de participante
+                        </div>
+                        <h2 class="h4 fw-bold mb-2">
+                            Olá {{ request.user.username }}, aqui voce podera cadastrar um participante
+                        </h2>
+                    </div>
+
+                    <div class="col-lg-4 text-lg-end">
+                        <a
+                            href="{% url 'home' %}"
+                            class="btn btn-light"
+                        >
+                            <i class="bi bi-arrow-left me-2"></i>
+                            Voltar para o dashboard
+                        </a>
+                    </div>
+                </div>
+
+            </section>
+
+
+            
+
+
+
+           
+
+                <div class="card shadow p-4 dados-card">
+
+                    <h2 class="login-title">
+                        Cadastro de participante
+                    </h2>
+
+                    <form method="POST">
+
+                        {% csrf_token %}
+
+                        <div class="form-group">
+                            <label for="nome" class="labels">
+                                Nome completo
+                            </label>
+
+                            <input
+                                type="text"
+                                name="nome"
+                                id="nome"
+                                class="inputs"
+                                autocomplete="name"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="cpf" class="labels">
+                                CPF
+                            </label>
+
+                            <input
+                                type="text"
+                                name="cpf"
+                                id="cpf"
+                                class="inputs"
+                                inputmode="numeric"
+                                maxlength="14"
+                                placeholder="000.000.000-00"
+                                autocomplete="off"
+                                required
+                            >
+                        </div>
+
+                    <div class="form-group">
+                        <label for="data_nascimento" class="labels">
+                            Data de nascimento
+                        </label>
+
+                        <input
+                            type="date"
+                            name="data_nascimento"
+                            id="data_nascimento"
+                            class="inputs"
+                            autocomplete="bday"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email" class="labels">
+                            E-mail
+                        </label>
+
+                        <input
+                            type="email"
+                            name="email"
+                            id="email"
+                            class="inputs"
+                            autocomplete="email"
+                            placeholder="participante@email.com"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+
+                        <label for="pesquisa" class="labels">
+                            Pesquisa
+                        </label>
+
+                        <select
+                            name="pesquisa"
+                            id="pesquisa"
+                            class="inputs"
+                            required
+                        >
+
+                            <option value="">
+                                Selecione uma pesquisa
+                            </option>
+
+                            {% for pesquisa in pesquisas %}
+
+                                <option value="{{ pesquisa.id }}">
+                                    {{ pesquisa.registro_pesquisa }} -
+                                    {{ pesquisa.nome }}
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+                    <p class="privacy-note">
+                        Os dados pessoais informados serão protegidos
+                        antes de serem armazenados.
+                    </p>
+
+                    <button
+                        type="submit"
+                        class="btn-submit"
+                    >
+                        Cadastrar participante
+                    </button>
+
+                </form>
+
+                {% if erro %}
+
+                    <div class="alert-error" role="alert">
+                        {{ erro }}
+                    </div>
+
+                {% endif %}
+
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        </main>
 
     </div>
+
+</div>
+
+
 
 </div>
 
