@@ -225,18 +225,16 @@
                         <strong class="login-title">{{ documento.nome_original }}</strong>
                     </div>
 
-
+                    {% if request.user.perfil == "coordenador" %}
                     <div class="form-group">
-
-                        <form method="post" action="{% url 'revogar_acesso_documento' 1 %}">
+                        <form method="post" action="{% url 'revogar_acesso_documento' documento.id %}">
                             {% csrf_token %}
-                            <a class="btn-warning" type="submit">
+                            <button class="btn-warning" type="submit">
                                 Revogar acesso
-                            </a>
+                            </button>
                         </form>
-
                     </div>
-
+                    {% endif %}
                     <div class="form-group">
 
                         <a class="btn-submit" href="{% url 'download_documento' documento.id %}">
@@ -252,13 +250,13 @@
                         </a>
 
                     </div>
-
+                    {% if request.user.perfil == "coordenador" %}
                     <div class="form-group">
 
                         <a href="{% url 'conceder_acesso_documento' documento.id %}">conceder acesso documentos</a>
 
                     </div>
-
+                    {% endif %}
 
                 </div>
                 <hr>
