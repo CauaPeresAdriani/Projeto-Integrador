@@ -213,65 +213,110 @@
 
 
             </div>
-            <h2>Documentos</h2>
+<h2>Documentos</h2>
 
-            {% if documentos %}
-            <div class="card-shadow p-4 dados-card">
+{% if documentos %}
 
-                {% for documento in documentos %}
+<div class="card-shadow p-4 dados-card">
 
-                <div class="stat-card">
+    {% for documento in documentos %}
+
+    <div class="stat-card">
+
+        <div class="form-group">
+            <strong class="login-title">
+                <i class="bi bi-file-earmark-lock me-2"></i>
+                {{ documento.nome_original }}
+            </strong>
+        </div>
+
+        <div class="form-group">
+            <a class="btn-submit"
+               href="{% url 'download_documento' documento.id %}">
+                <i class="bi bi-download me-2"></i>
+                Baixar
+            </a>
+        </div>
+
+        <div class="form-group">
+            <a class="btn-submit"
+               href="{% url 'visualizar_documento' documento.id %}">
+                <i class="bi bi-eye me-2"></i>
+                Visualizar
+            </a>
+        </div>
+
+        {% for acesso in acessos_documentos %}
+
+            {% if acesso.documento.id == documento.id %}
+
+                <p>
+                    <strong>
+                        <i class="bi bi-person-check me-1"></i>
+                        Acesso concedido para:
+                    </strong>
+                    {{ acesso.usuario.username }}
+                </p>
+
+                {% if request.user.perfil == "coordenador" %}
+
                     <div class="form-group">
-                        <strong class="login-title">{{ documento.nome_original }}</strong>
-                    </div>
+                        <form method="post"
+                              action="{% url 'revogar_acesso_documento' acesso.id %}">
 
-                    {% if request.user.perfil == "coordenador" %}
-                    <div class="form-group">
-                        <form method="post" action="{% url 'revogar_acesso_documento' documento.id %}">
                             {% csrf_token %}
-                            <button class="btn-warning" type="submit">
+                      
+
+                            <div class="form-group">
+                                <button class="btn-submit" type="submit">
+                                <i class="bi bi-person-x me-2"></i>
                                 Revogar acesso
                             </button>
+
+                            
+
+                            </div>
+                            
+
                         </form>
                     </div>
-                    {% endif %}
-                    <div class="form-group">
 
-                        <a class="btn-submit" href="{% url 'download_documento' documento.id %}">
-                            Baixar
-                        </a>
-
-                    </div>
-
-                    <div class="form-group">
-
-                        <a class="btn-submit" href="{% url 'visualizar_documento' documento.id %}">
-                            Visualizar
-                        </a>
-
-                    </div>
-                    {% if request.user.perfil == "coordenador" %}
-                    <div class="form-group">
-
-                        <a href="{% url 'conceder_acesso_documento' documento.id %}">conceder acesso documentos</a>
-
-                    </div>
-                    {% endif %}
-
-                </div>
-                <hr>
-
-                {% endfor %}
-
-                {% else %}
-                <p>Nenhum documento cadastrado.</p>
                 {% endif %}
 
+            {% endif %}
 
+        {% endfor %}
 
+        {% if request.user.perfil == "coordenador" %}
+
+            <div class="form-group">
+                <a class="btn-submit" href="{% url 'conceder_acesso_documento' documento.id %}">
+                    <i class="bi bi-person-plus me-2"></i>
+                    Conceder acesso ao documento
+                </a>
             </div>
 
-        </main>
+        {% endif %}
+
     </div>
+
+    <hr>
+
+    {% endfor %}
+
 </div>
+
+{% else %}
+
+<p>
+    <i class="bi bi-file-earmark-x me-2"></i>
+    Nenhum documento cadastrado.
+</p>
+
+{% endif %}
+
+</main>
+</div>
+</div>
+
 {% endblock %}

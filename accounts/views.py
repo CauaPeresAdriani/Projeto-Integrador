@@ -1796,6 +1796,14 @@ def detalhe_participante_view(request, participante_id):
     documentos = Documento.objects.filter(
         participante=participante
         )
+
+    acessos_documentos = Acesso.objects.filter(
+    documento__participante=participante,
+    revogado=False
+    ).select_related(
+        "documento",
+        "usuario"
+    )
     return render(
         request,
         'accounts/detalhe_participante.html',
@@ -1806,6 +1814,7 @@ def detalhe_participante_view(request, participante_id):
             'faixa_etaria': faixa_etaria,
             'documentos': documentos,
             "now": timezone.now(),
+            'acessos_documentos': acessos_documentos,
         }
     )
 
