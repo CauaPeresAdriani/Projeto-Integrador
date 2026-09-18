@@ -1331,7 +1331,7 @@ def download_documento_view(request, documento_id):
             status=500
         )
 
-
+@login_required
 def visualizar_documento_view(request, documento_id):
     
     try:
