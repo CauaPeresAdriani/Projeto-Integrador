@@ -73,9 +73,8 @@ def usuario_pode_acessar_documento(usuario, documento):
     if not usuario.is_authenticated:
         return False
 
-    if eh_admin_ou_coordenador(usuario):
+    if usuario.perfil == "coordenador":
         return True
-
     # O participante pode acessar documento próprio
     if (
         usuario.perfil == "participante"
