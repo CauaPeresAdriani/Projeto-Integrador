@@ -16,7 +16,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.core.validators import validate_email
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -1544,31 +1544,59 @@ def revogar_acesso_documento_view(request, acesso_id):
 ## LOGICA DE PESQUISAS ##
 
 @login_required
+@login_required
 def lista_pesquisas_view(request):
+
     context = {}
+
     usuario = request.user
 
     if eh_admin_ou_coordenador(usuario):
+
         pesquisas = Pesquisa.objects.all()
 
     elif usuario.perfil == "responsavel":
+
         pesquisas = Pesquisa.objects.filter(
-            responsavel=usuario  
+            responsavel=usuario
         )
 
     elif usuario.perfil == "participante":
+
         pesquisas = Pesquisa.objects.filter(
             participantes__participante__usuario=usuario
         ).distinct()
-        context['minhas_pesquisas'] = ParticipacaoPesquisa.objects.filter(participante__usuario=usuario, status='ativo').count()
-        context['meus_documentos'] = Documento.objects.filter(participante__usuario=usuario).count()
-        participante = Participante.objects.filter(usuario = request.user).first()
+
+        context['minhas_pesquisas'] = (
+            ParticipacaoPesquisa.objects.filter(
+                participante__usuario=usuario,
+                status='ativo'
+            ).count()
+        )
+
+        context['meus_documentos'] = (
+            Documento.objects.filter(
+                participante__usuario=usuario
+            ).count()
+        )
+
+        participante = Participante.objects.filter(
+            usuario=request.user
+        ).first()
 
     elif usuario.perfil == "pesquisador":
-        pesquisas = Pesquisa.objects.all()
+
+        # Pesquisador vê somente as pesquisas vinculadas a ele.
+        pesquisas = Pesquisa.objects.filter(
+            pesquisadores=usuario
+        )
 
     else:
-        return HttpResponse("Acesso negado.", status=403)
+
+        return HttpResponse(
+            "Acesso negado.",
+            status=403
+        )
 
     return render(
         request,
@@ -1585,8 +1613,12 @@ def detalhe_pesquisa_view(request, pesquisa_id):
     try:
         pesquisa = Pesquisa.objects.get(id=pesquisa_id)
     except Pesquisa.DoesNotExist:
-        return HttpResponse("Pesquisa não encontrada.", status=404)
+        return HttpResponse(
+            "Pesquisa não encontrada.",
+            status=404
+        )
 
+    # Verifica se o usuário pode acessar esta pesquisa.
     if not usuario_pode_acessar_pesquisa(
         request.user,
         pesquisa
@@ -1596,11 +1628,25 @@ def detalhe_pesquisa_view(request, pesquisa_id):
             status=403
         )
 
-    participacoes = ParticipacaoPesquisa.objects.filter(
-        pesquisa=pesquisa
-    ).select_related(
-        'participante'
-    )
+    # Participante só pode visualizar a própria participação.
+    if request.user.perfil == "participante":
+        participacoes = (
+            ParticipacaoPesquisa.objects
+            .filter(
+                pesquisa=pesquisa,
+                participante__usuario=request.user
+            )
+            .select_related('participante')
+        )
+
+    # Os demais usuários autorizados podem visualizar
+    # os participantes da pesquisa.
+    else:
+        participacoes = (
+            ParticipacaoPesquisa.objects
+            .filter(pesquisa=pesquisa)
+            .select_related('participante')
+        )
 
     return render(
         request,
@@ -1608,6 +1654,135 @@ def detalhe_pesquisa_view(request, pesquisa_id):
         {
             'pesquisa': pesquisa,
             'participacoes': participacoes,
+        }
+    )
+
+@login_required
+def editar_pesquisa_view(request, pesquisa_id):
+
+    # Busca a pesquisa pelo ID.
+    try:
+        pesquisa = Pesquisa.objects.get(
+            id=pesquisa_id
+        )
+    except Pesquisa.DoesNotExist:
+        return HttpResponse(
+            "Pesquisa não encontrada.",
+            status=404
+        )
+
+    # Somente o responsável da própria pesquisa pode editar.
+    if (
+        request.user.perfil != "responsavel"
+        or pesquisa.responsavel_id != request.user.id
+    ):
+        return HttpResponse(
+            "Acesso negado. Você não pode editar esta pesquisa.",
+            status=403
+        )
+
+    erro = None
+
+    if request.method == "POST":
+
+        nome = request.POST.get(
+            "nome",
+            ""
+        ).strip()
+
+        descricao = request.POST.get(
+            "descricao",
+            ""
+        ).strip()
+
+        status = request.POST.get(
+            "status",
+            ""
+        ).strip()
+
+        data_inicio = request.POST.get(
+            "data_inicio",
+            ""
+        ).strip()
+
+        data_fim = request.POST.get(
+            "data_fim",
+            ""
+        ).strip()
+
+        # Verifica o nome.
+        if not nome:
+            erro = "O nome da pesquisa é obrigatório."
+
+        # Verifica o status.
+        elif status not in [
+            "planejamento",
+            "ativa",
+            "encerrada",
+            "cancelada",
+        ]:
+            erro = "Status da pesquisa inválido."
+
+        # Verifica as datas.
+        elif data_inicio and data_fim:
+            try:
+                inicio = datetime.strptime(
+                    data_inicio,
+                    "%Y-%m-%d"
+                ).date()
+
+                fim = datetime.strptime(
+                    data_fim,
+                    "%Y-%m-%d"
+                ).date()
+
+                if fim < inicio:
+                    erro = (
+                        "A data de fim não pode ser anterior "
+                        "à data de início."
+                    )
+
+            except ValueError:
+                erro = "Informe datas válidas."
+
+        # Salva as alterações.
+        if not erro:
+
+            pesquisa.nome = nome
+            pesquisa.descricao = descricao
+            pesquisa.status = status
+            pesquisa.data_inicio = (
+                data_inicio or None
+            )
+            pesquisa.data_fim = (
+                data_fim or None
+            )
+
+            pesquisa.save()
+
+            # Registra a alteração no histórico.
+            AuditLog.objects.create(
+                usuario=request.user,
+                evento="Edição de pesquisa",
+                ip=request.META.get("REMOTE_ADDR"),
+                resultado="Sucesso",
+                detalhes=(
+                    f"Pesquisa {pesquisa.registro_pesquisa} "
+                    f"editada pelo responsável."
+                )
+            )
+
+            return redirect(
+                "detalhe_pesquisa",
+                pesquisa_id=pesquisa.id
+            )
+
+    return render(
+        request,
+        "accounts/editar_pesquisa.html",
+        {
+            "pesquisa": pesquisa,
+            "erro": erro,
         }
     )
 
@@ -2169,3 +2344,44 @@ def excluir_dados_view(request):
     logout(request)
 
     return redirect("login")
+
+@login_required
+def analise_logs_view(request):
+    # Somente administrador e coordenador podem analisar os logs.
+    if request.user.perfil not in ['administrador', 'coordenador']:
+        return HttpResponse("Acesso negado.", status=403)
+
+    # Conta quantas vezes cada evento aconteceu.
+    eventos = (
+        AuditLog.objects
+        .values('evento')
+        .annotate(total=Count('id'))
+        .order_by('-total')
+    )
+
+    # Conta os resultados dos eventos.
+    resultados = (
+        AuditLog.objects
+        .values('resultado')
+        .annotate(total=Count('id'))
+        .order_by('-total')
+    )
+
+    # Busca os últimos 20 registros.
+    ultimos_logs = (
+        AuditLog.objects
+        .select_related('usuario')
+        .order_by('-data_hora')[:20]
+    )
+
+    contexto = {
+        'eventos': eventos,
+        'resultados': resultados,
+        'ultimos_logs': ultimos_logs,
+    }
+
+    return render(
+        request,
+        'accounts/analise_logs.html',
+        contexto
+    )

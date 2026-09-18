@@ -1,0 +1,245 @@
+{% extends 'accounts/base.html' %}
+
+{% load static %}
+
+{% block title %}Editar Pesquisa | ClinSecure{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+>
+{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <!-- Cabeçalho da página -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h1 class="fw-bold">
+                <i class="bi bi-pencil-square me-2"></i>
+                Editar Pesquisa
+            </h1>
+
+            <p class="text-muted mb-0">
+                Altere os dados da pesquisa abaixo.
+            </p>
+        </div>
+
+        <a
+            href="{% url 'detalhe_pesquisa' pesquisa.id %}"
+            class="btn btn-secondary"
+        >
+            <i class="bi bi-arrow-left me-2"></i>
+            Voltar
+        </a>
+
+    </div>
+
+
+    <!-- Formulário -->
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <!-- Identificação da pesquisa -->
+            <div class="mb-4">
+                <label class="form-label fw-bold">
+                    Registro da pesquisa
+                </label>
+
+                <input
+                    type="text"
+                    class="form-control"
+                    value="{{ pesquisa.registro_pesquisa }}"
+                    disabled
+                >
+
+                <div class="form-text">
+                    O registro da pesquisa não pode ser alterado.
+                </div>
+            </div>
+
+
+            {% if erro %}
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    {{ erro }}
+                </div>
+            {% endif %}
+
+
+            <form method="POST">
+
+                {% csrf_token %}
+
+
+                <!-- Nome -->
+                <div class="mb-3">
+
+                    <label
+                        for="nome"
+                        class="form-label fw-bold"
+                    >
+                        Nome da pesquisa
+                    </label>
+
+                    <input
+                        type="text"
+                        id="nome"
+                        name="nome"
+                        class="form-control"
+                        value="{{ pesquisa.nome }}"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- Descrição -->
+                <div class="mb-3">
+
+                    <label
+                        for="descricao"
+                        class="form-label fw-bold"
+                    >
+                        Descrição
+                    </label>
+
+                    <textarea
+                        id="descricao"
+                        name="descricao"
+                        class="form-control"
+                        rows="5"
+                    >{{ pesquisa.descricao }}</textarea>
+
+                </div>
+
+
+                <!-- Status -->
+                <div class="mb-3">
+
+                    <label
+                        for="status"
+                        class="form-label fw-bold"
+                    >
+                        Status
+                    </label>
+
+                    <select
+                        id="status"
+                        name="status"
+                        class="form-select"
+                        required
+                    >
+
+                        <option
+                            value="planejamento"
+                            {% if pesquisa.status == "planejamento" %}selected{% endif %}
+                        >
+                            Planejamento
+                        </option>
+
+                        <option
+                            value="ativa"
+                            {% if pesquisa.status == "ativa" %}selected{% endif %}
+                        >
+                            Ativa
+                        </option>
+
+                        <option
+                            value="encerrada"
+                            {% if pesquisa.status == "encerrada" %}selected{% endif %}
+                        >
+                            Encerrada
+                        </option>
+
+                        <option
+                            value="cancelada"
+                            {% if pesquisa.status == "cancelada" %}selected{% endif %}
+                        >
+                            Cancelada
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- Datas -->
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+
+                        <label
+                            for="data_inicio"
+                            class="form-label fw-bold"
+                        >
+                            Data de início
+                        </label>
+
+                        <input
+                            type="date"
+                            id="data_inicio"
+                            name="data_inicio"
+                            class="form-control"
+                            value="{{ pesquisa.data_inicio|date:'Y-m-d' }}"
+                        >
+
+                    </div>
+
+
+                    <div class="col-md-6 mb-3">
+
+                        <label
+                            for="data_fim"
+                            class="form-label fw-bold"
+                        >
+                            Data de fim
+                        </label>
+
+                        <input
+                            type="date"
+                            id="data_fim"
+                            name="data_fim"
+                            class="form-control"
+                            value="{{ pesquisa.data_fim|date:'Y-m-d' }}"
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <!-- Botões -->
+                <div class="d-flex gap-2 mt-4">
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+                        <i class="bi bi-check-lg me-2"></i>
+                        Salvar alterações
+                    </button>
+
+                    <a
+                        href="{% url 'detalhe_pesquisa' pesquisa.id %}"
+                        class="btn btn-outline-secondary"
+                    >
+                        Cancelar
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -34,12 +34,11 @@ def usuario_pode_acessar_pesquisa(usuario, pesquisa):
             participante__usuario=usuario
         ).exists()
 
-    # Pesquisador
+# Pesquisador: somente pesquisas às quais está vinculado.
     if usuario.perfil == "pesquisador":
-        return True
-
-    return False
-
+        return pesquisa.pesquisadores.filter(
+        id=usuario.id
+    ).exists()
 
 def usuario_pode_acessar_participante(usuario, participante):
     if not usuario.is_authenticated:
@@ -62,13 +61,12 @@ def usuario_pode_acessar_participante(usuario, participante):
             pesquisa__responsavel=usuario
         ).exists()
 
-    # Pesquisador
+  # Pesquisador: somente participantes de pesquisas vinculadas a ele.
     if usuario.perfil == "pesquisador":
         return ParticipacaoPesquisa.objects.filter(
-            participante=participante
-        ).exists()
-
-    return False
+        participante=participante,
+        pesquisa__pesquisadores=usuario
+    ).exists()
 
 
 def usuario_pode_acessar_documento(usuario, documento):
