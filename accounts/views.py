@@ -1831,7 +1831,21 @@ def cadastrar_dado_pesquisa_view(request, participacao_id):
 
     erro = None
 
-    if request.method == 'POST':
+ # Verifica se o participante possui consentimento ativo.
+    consentimento_ativo = Consentimento.objects.filter(
+        participante=participacao.participante,
+        finalidade=FINALIDADE_CONSENTIMENTO,
+        versao=VERSAO_CONSENTIMENTO,
+        revogado=False
+    ).exists()
+
+    if request.method == 'POST' and not consentimento_ativo:
+        erro = (
+            "Não é possível cadastrar dados de pesquisa "
+            "porque o participante não possui consentimento ativo."
+        )
+
+    elif request.method == 'POST':
 
         tipo = request.POST.get('tipo', '').strip()
         data_coleta = request.POST.get('data_coleta', '').strip()
