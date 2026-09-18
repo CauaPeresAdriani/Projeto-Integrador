@@ -280,6 +280,16 @@
                     </div>
                     {% endif %}
 
+                    {% if request.user.perfil == "administrador"%}
+                    <a href="{% url 'analise_logs' %}" class="action-card text-decoration-none">
+                        <span class="action-icon">
+                            <i class="bi bi-shield-check"></i>
+                        </span>
+                        <h3>Análise de Logs</h3>
+                        <p>Consulte os registros de auditoria e atividades de segurança.</p>
+                    </a>
+                    {% endif %}
+
                     <div class="col-md-6 col-xl-4">
                         <a href="{% url 'password_reset' %}" class="action-card">
                             <span class="action-icon">

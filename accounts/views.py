@@ -1924,7 +1924,16 @@ def detalhe_participante_view(request, participante_id):
     # Dados científicos/exames do participante.
     dados = DadoPesquisa.objects.filter(
         participacao__participante=participante
-    ).select_related(
+    )
+
+    # Pesquisador: somente dados das pesquisas às quais
+    # o pesquisador está vinculado.
+    if request.user.perfil == "pesquisador":
+        dados = dados.filter(
+            participacao__pesquisa__pesquisadores=request.user
+        )
+
+    dados = dados.select_related(
         'participacao',
         'participacao__pesquisa'
     ).order_by(
@@ -1986,18 +1995,18 @@ def detalhe_participante_view(request, participante_id):
             'pesquisa': dado.participacao.pesquisa,
         })
 
-    
     documentos = Documento.objects.filter(
         participante=participante
-        )
+    )
 
     acessos_documentos = Acesso.objects.filter(
-    documento__participante=participante,
-    revogado=False
+        documento__participante=participante,
+        revogado=False
     ).select_related(
         "documento",
         "usuario"
     )
+
     return render(
         request,
         'accounts/detalhe_participante.html',
