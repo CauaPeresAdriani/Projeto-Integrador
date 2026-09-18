@@ -35,7 +35,7 @@
                 <span>Pesquisas</span>
             </a>
 
-            {% if request.user.perfil == "administrador" or request.user.perfil == "coordenador" %}
+            {% if request.user.perfil == "administrador" %}
             <a href="{% url 'cadastro' %}" class="nav-link">
                 <i class="bi bi-people"></i>
                 <span>Usuários</span>
@@ -266,7 +266,7 @@
                     </div>
                     {% endif %}
 
-                    {% if request.user.perfil == "administrador" or request.user.perfil == "coordenador" %}
+                    {% if request.user.perfil == "administrador" %}
                     <div class="col-md-6 col-xl-4">
                         <a href="{% url 'cadastro' %}" class="action-card">
                             <span class="action-icon">

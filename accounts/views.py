@@ -236,7 +236,12 @@ def meu_login_view(request):
     )
 
 ## LOGICA DE CADASTRO ##
+
+@login_required
 def cadastro_view(request):
+
+    if request.user.perfil != 'administrador':
+        return redirect('home')
     ## Instanciando variavel erro como none
     erro = None
     ## se o metodo for post, ou seja, se o usuario clicou no botao de cadastro

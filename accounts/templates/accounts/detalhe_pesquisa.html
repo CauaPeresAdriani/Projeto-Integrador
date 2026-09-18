@@ -40,7 +40,7 @@
                 <span>Pesquisas</span>
             </a>
 
-            {% if request.user.perfil == "administrador" or request.user.perfil == "coordenador" %}
+            {% if request.user.perfil == "administrador" %}
                 <a href="{% url 'cadastro' %}" class="nav-link">
                     <i class="bi bi-people"></i>
                     <span>Usuários</span>
