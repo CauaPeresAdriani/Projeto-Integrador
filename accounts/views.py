@@ -240,7 +240,7 @@ def meu_login_view(request):
 @login_required
 def cadastro_view(request):
 
-    if request.user.perfil != 'administrador':
+    if request.user.perfil not in ['administrador', 'coordenador']:
         return redirect('home')
     ## Instanciando variavel erro como none
     erro = None
@@ -251,6 +251,14 @@ def cadastro_view(request):
         email = request.POST.get('email', '').strip()
         password = request.POST.get('password', '')
         perfil = request.POST.get('perfil', '').strip()
+        perfis_permitidos = {
+            'administrador': ['responsavel', 'pesquisador', 'coordenador'],
+            'coordenador': ['responsavel', 'pesquisador'],
+        }
+
+        if perfil not in perfis_permitidos.get(request.user.perfil, []):
+            erro = "Você não tem permissão para cadastrar esse perfil."
+            return render(request, 'accounts/cadastro.html', {'erro': erro})
     ## verificando se todos os campos obrigatorios foram preenchidos     
         if not username or not email or not password:
             erro = "Por favor, preencha todos os campos obrigatórios."
@@ -697,13 +705,15 @@ def ativar_participante_view(request, uidb64, token):
                 }
             )
 
-        if len(senha1) < 8:
+        try:
+            validate_password(senha1, usuario)
+        except ValidationError as e:
             return render(
                 request,
                 'accounts/ativar_participante.html',
                 {
                     'validlink': True,
-                    'erro': 'A senha deve possuir pelo menos 8 caracteres.'
+                    'erro': ' '.join(e.messages)
                 }
             )
 
@@ -1247,6 +1257,49 @@ def upload_documento_view(request):
             },
             status=400
         )
+
+    nome_arquivo = (arquivo.name or "").strip()
+    extensao = os.path.splitext(nome_arquivo)[1].lower()
+
+    # 1. Somente .pdf
+    if extensao != ".pdf":
+        return render(
+            request,
+            "accounts/upload_documento.html",
+            {
+                "participantes": participantes,
+                "erro": "Apenas arquivos PDF são permitidos."
+            },
+            status=400
+        )
+
+    # 2. Limite de tamanho
+    if arquivo.size > MAX_PDF_SIZE:
+        return render(
+            request,
+            "accounts/upload_documento.html",
+            {
+                "participantes": participantes,
+                "erro": "O arquivo PDF deve ter no máximo 10 MB."
+            },
+            status=400
+        )
+
+    # 3. Verifica a assinatura do arquivo
+    cabecalho = arquivo.read(5)
+    arquivo.seek(0)
+
+    if cabecalho != b"%PDF-":
+        return render(
+            request,
+            "accounts/upload_documento.html",
+            {
+                "participantes": participantes,
+                "erro": "O arquivo enviado não é um PDF válido."
+            },
+            status=400
+        )
+
 
     try:
         participante = Participante.objects.get(

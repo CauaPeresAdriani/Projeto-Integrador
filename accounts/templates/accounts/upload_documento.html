@@ -156,27 +156,32 @@
 
                     <div class="card shadow p-4 dados-card" >
                     
+                       
                         <form method="POST" enctype="multipart/form-data">
-                            {% csrf_token %} 
-                            
+                            {% csrf_token %}
+
                             <div class="form-group">
 
                                 <label class="labels" for="participante">Participante:</label>
 
-                                <select class="inputs" name="participante" id="participante" required>
-
-                                <option value="">Selecione um participante disponivel</option>
-
-                                {% for participante in participantes %}
-                                    <option value="{{ participante.id }}">
-                                        {{ participante.registro_participante }}
+                                <select
+                                    class="inputs"
+                                    name="participante"
+                                    id="participante"
+                                    required
+                                >
+                                    <option value="">
+                                        Selecione um participante disponível
                                     </option>
-                                {% endfor %}
 
-                            </select>
+                                    {% for participante in participantes %}
+                                        <option value="{{ participante.id }}">
+                                            {{ participante.registro_participante }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
 
                             </div>
-                            
 
                             <br><br>
 
@@ -184,29 +189,41 @@
 
                                 <label class="labels" for="arquivo">Documento:</label>
 
-                            <input
-                                type="file"
-                                name="arquivo"
-                                id="arquivo"
-                                required
-                                class="inputs"
-                            >
+                                <input
+                                    type="file"
+                                    name="arquivo"
+                                    id="arquivo"
+                                    accept=".pdf,application/pdf"
+                                    required
+                                >
+
+                                <p
+                                    id="erro-arquivo"
+                                    style="display: none; color: red;"
+                                ></p>
 
                             </div>
 
-                            
-
                             <br><br>
 
-                            <button class="btn-submit" type="submit">
+                            <button
+                                class="btn-submit"
+                                id="btn-upload"
+                                type="submit"
+                                disabled
+                            >
                                 Enviar documento
                             </button>
 
                             {% if erro %}
-                            <p>{{ erro }}</p>
-                        {% endif %}
+                                <p>{{ erro }}</p>
+                            {% endif %}
 
                         </form>
+
+
+
+
                                             
                     </div> 
                 </div>      
@@ -216,4 +233,54 @@
     </div>
 
 </div>
+
+<script>
+    const arquivoInput = document.getElementById("arquivo");
+    const botaoUpload = document.getElementById("btn-upload");
+    const erroArquivo = document.getElementById("erro-arquivo");
+
+    const MAX_PDF_SIZE = 10 * 1024 * 1024; // 10 MB
+
+    arquivoInput.addEventListener("change", function () {
+
+        const arquivo = this.files[0];
+
+        botaoUpload.disabled = true;
+
+        erroArquivo.style.display = "none";
+        erroArquivo.textContent = "";
+
+        if (!arquivo) {
+            return;
+        }
+
+        // Verifica extensão
+        if (!arquivo.name.toLowerCase().endsWith(".pdf")) {
+
+            erroArquivo.textContent =
+                "Selecione somente arquivos PDF.";
+
+            erroArquivo.style.display = "block";
+
+            this.value = "";
+
+            return;
+        }
+
+        if (arquivo.size > MAX_PDF_SIZE) {
+
+            erroArquivo.textContent =
+                "O arquivo PDF deve ter no máximo 10 MB.";
+
+            erroArquivo.style.display = "block";
+
+            this.value = "";
+
+            return;
+        }
+
+        
+        botaoUpload.disabled = false;
+    });
+</script>
 {% endblock %}
