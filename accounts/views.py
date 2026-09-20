@@ -51,6 +51,8 @@ from .permissions import (
     usuario_pode_acessar_participante,
     usuario_pode_acessar_pesquisa,
 )
+
+MAX_PDF_SIZE = 10 * 1024 * 1024  # 10 MB
 ## LOGICA DE LOGIN ##
 
 def meu_login_view(request):
