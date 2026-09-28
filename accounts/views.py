@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from io import BytesIO
 import qrcode
 import requests
-
+import uuid
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.password_validation import validate_password
@@ -928,9 +928,6 @@ def verificar_2fa_view(request):
         {'erro': erro}
     )
 
-## LOGICA DE DEFESA DE URL ##
-# accounts/views.py
-# (Mantenha todos os imports existentes)
 
 @login_required
 def home_view(request):
@@ -1714,6 +1711,204 @@ def detalhe_pesquisa_view(request, pesquisa_id):
         {
             'pesquisa': pesquisa,
             'participacoes': participacoes,
+        }
+    )
+
+@login_required
+def criar_pesquisa_view(request):
+
+    # Apenas responsáveis podem criar pesquisas.
+    if request.user.perfil != "responsavel":
+        return HttpResponse(
+            "Acesso negado. Apenas usuários com perfil 'responsável' podem criar pesquisas.",
+            status=403
+        )
+
+    erro = None
+
+    # Pesquisadores disponíveis para vinculação.
+    pesquisadores_disponiveis = Usuario.objects.filter(
+        perfil="pesquisador",
+        is_active=True
+    ).order_by("username")
+
+    if request.method == "POST":
+
+        nome = request.POST.get(
+            "nome",
+            ""
+        ).strip()
+
+        descricao = request.POST.get(
+            "descricao",
+            ""
+        ).strip()
+
+        status = request.POST.get(
+            "status",
+            "planejamento"
+        ).strip()
+
+        data_inicio = request.POST.get(
+            "data_inicio",
+            ""
+        ).strip()
+
+        data_fim = request.POST.get(
+            "data_fim",
+            ""
+        ).strip()
+
+        pesquisadores_ids = request.POST.getlist(
+            "pesquisadores"
+        )
+
+        if not nome:
+            erro = "O nome da pesquisa é obrigatório."
+
+        elif status not in [
+            "planejamento",
+            "ativa",
+            "encerrada",
+            "cancelada",
+        ]:
+            erro = "Status da pesquisa inválido."
+
+        # Validação da data inicial
+        elif data_inicio:
+            try:
+                inicio = datetime.strptime(
+                    data_inicio,
+                    "%Y-%m-%d"
+                ).date()
+            except ValueError:
+                erro = "A data de início é inválida."
+
+        # Validação da data final
+        if not erro and data_fim:
+            try:
+                fim = datetime.strptime(
+                    data_fim,
+                    "%Y-%m-%d"
+                ).date()
+            except ValueError:
+                erro = "A data de fim é inválida."
+
+        # Verifica se a data final não vem antes da inicial.
+        if not erro and data_inicio and data_fim:
+            if fim < inicio:
+                erro = (
+                    "A data de fim não pode ser anterior "
+                    "à data de início."
+                )
+
+        # Busca somente usuários que realmente são pesquisadores.
+        pesquisadores = Usuario.objects.filter(
+            id__in=pesquisadores_ids,
+            perfil="pesquisador",
+            is_active=True
+        )
+
+        # Impede que IDs inválidos sejam enviados artificialmente.
+        if not erro and len(pesquisadores) != len(
+            set(pesquisadores_ids)
+        ):
+            erro = "Um ou mais pesquisadores selecionados são inválidos."
+
+    
+
+        if not erro:
+
+            # O campo é UNIQUE, então usamos um valor temporário
+            # único antes de obter o ID da pesquisa.
+            
+
+            pesquisa = Pesquisa.objects.create(
+                registro_pesquisa=f"TEMP-{uuid.uuid4().hex[:20]}",
+                nome=nome,
+                descricao=descricao,
+                status=status,
+                data_inicio=(
+                    inicio if data_inicio else None
+                ),
+                data_fim=(
+                    fim if data_fim else None
+                ),
+                responsavel=request.user
+            )
+
+            # Agora que temos o ID, gera o registro oficial.
+            pesquisa.registro_pesquisa = (
+                f"PS-{pesquisa.id:06d}"
+            )
+
+            pesquisa.save(
+                update_fields=[
+                    "registro_pesquisa"
+                ]
+            )
+
+            # Vincula pesquisadores.
+            if pesquisadores.exists():
+                pesquisa.pesquisadores.set(
+                    pesquisadores
+                )
+
+            # Auditoria.
+            AuditLog.objects.create(
+                usuario=request.user,
+                evento="Criação de pesquisa",
+                ip=request.META.get("REMOTE_ADDR"),
+                resultado="Sucesso",
+                detalhes=(
+                    f"Pesquisa {pesquisa.registro_pesquisa} "
+                    f"criada pelo responsável. "
+                    f"Nome: {pesquisa.nome}. "
+                    f"Status: {pesquisa.status}."
+                )
+            )
+
+            return redirect(
+                "detalhe_pesquisa",
+                pesquisa_id=pesquisa.id
+            )
+
+    return render(
+        request,
+        "accounts/criar_pesquisa.html",
+        {
+            "erro": erro,
+            "pesquisadores": pesquisadores_disponiveis,
+            "pesquisadores_selecionados": (
+                pesquisadores_ids
+                if request.method == "POST"
+                else []
+            ),
+            "nome": (
+                request.POST.get("nome", "")
+                if request.method == "POST"
+                else ""
+            ),
+            "descricao": (
+                request.POST.get("descricao", "")
+                if request.method == "POST"
+                else ""
+            ),
+            "status": (
+                request.POST.get("status", "planejamento")
+                if request.method == "POST"
+                else "planejamento"
+            ),
+            "data_inicio": (
+                request.POST.get("data_inicio", "")
+                if request.method == "POST"
+                else ""
+            ),
+            "data_fim": (
+                request.POST.get("data_fim", "")
+                if request.method == "POST"
+                else ""
+            ),
         }
     )
 

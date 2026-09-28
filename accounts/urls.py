@@ -95,6 +95,12 @@ urlpatterns = [
     ),
 
     path(
+    'pesquisas/nova/',
+    views.criar_pesquisa_view,
+    name='criar_pesquisa'
+    ),
+
+    path(
         'pesquisas/<int:pesquisa_id>/',
         views.detalhe_pesquisa_view,
         name='detalhe_pesquisa'
@@ -104,7 +110,9 @@ urlpatterns = [
     'pesquisas/<int:pesquisa_id>/editar/',
     views.editar_pesquisa_view,
     name='editar_pesquisa'
-),
+    ),
+
+
 
     # Participantes
     path(
