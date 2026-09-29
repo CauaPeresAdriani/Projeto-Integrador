@@ -718,7 +718,6 @@ def ativar_participante_view(request, uidb64, token):
                     'erro': ' '.join(e.messages)
                 }
             )
-
         usuario.set_password(senha1)
         usuario.save()
 
@@ -1175,7 +1174,6 @@ def confirmar_recuperacao_senha_view(request, uidb64, token):
 
         # Verifica se as senhas são iguais
         if senha1 != senha2:
-
             # Mostra mensagem de erro
             return render(
                 request,
@@ -1186,6 +1184,17 @@ def confirmar_recuperacao_senha_view(request, uidb64, token):
                 }
             )
 
+        try:
+            validate_password(senha1, usuario)
+        except ValidationError as e:
+            return render(
+                request,
+                'accounts/ativar_participante.html',
+                {
+                    'validlink': True,
+                    'erro': ' '.join(e.messages)
+                }
+            )
         # Define a nova senha
         usuario.set_password(senha1)
 
