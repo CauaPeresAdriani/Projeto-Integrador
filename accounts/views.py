@@ -684,7 +684,7 @@ def ativar_participante_view(request, uidb64, token):
 
     if request.method == 'POST':
 
-        senha1 = request.POST.get('password', '')
+        senha1 = request.POST.get('password')
         senha2 = request.POST.get('password_confirm', '')
 
         if not senha1 or not senha2:
