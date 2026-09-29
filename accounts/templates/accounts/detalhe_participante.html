@@ -260,6 +260,7 @@
                     {% if request.user.perfil == "coordenador" %}
 
                     <div class="form-group">
+                        <!-- nosemgrep: python.django.security.django-no-csrf-token.django-no-csrf-token -->
                         <form method="post" action="{% url 'revogar_acesso_documento' acesso.id %}">
 
                             {% csrf_token %}
