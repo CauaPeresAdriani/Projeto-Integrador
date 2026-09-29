@@ -6,7 +6,8 @@
 {% block extra_css %}
 
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    integrity="sha384-XGjxtQfXaH2tnPFa9x+ruJTuLE3Aa6LhHSWRr1XeTyhezb4abCG4ccI5AkVDxqC+" crossorigin="anonymous">
 {% endblock %}
 
 {% block content %}
@@ -76,7 +77,7 @@
             </a>
         </nav>
     </aside>
-    
+
 
     <div class="main-wrapper">
 
@@ -134,11 +135,11 @@
                 </div>
             </section>
 
-            
 
-            
 
-                <div class="card shadow p-4 stat-card">
+
+
+            <div class="card shadow p-4 stat-card">
                 <h2 class="login-title">
                     Conceder Acesso ao Documento
                 </h2>
@@ -162,61 +163,48 @@
                         </option>
 
                         {% for usuario in usuarios %}
-                            <option value="{{ usuario.id }}">
-                                {{ usuario.username }}
-                            </option>
+                        <option value="{{ usuario.id }}">
+                            {{ usuario.username }}
+                        </option>
                         {% endfor %}
                     </select>
                     <div>
 
                         <label class="labels" for="inicio_acesso">
-                        Início do acesso
+                            Início do acesso
                         </label>
 
-                        <input class="inputs"
-                        type="datetime-local"
-                        name="inicio_acesso"
-                        id="inicio_acesso"
-                        required
-                        >
+                        <input class="inputs" type="datetime-local" name="inicio_acesso" id="inicio_acesso" required>
 
                     </div>
-                    
+
 
                     <label class="labels" for="fim_acesso">
                         Fim do acesso
                     </label>
 
-                    <input class="inputs"
-                        type="datetime-local"
-                        name="fim_acesso"
-                        id="fim_acesso"
-                        required
-                    >
+                    <input class="inputs" type="datetime-local" name="fim_acesso" id="fim_acesso" required>
 
                     {% if erro %}
-                        <div class="alert-error" role="alert">
-                            {{ erro }}
-                        </div>
+                    <div class="alert-error" role="alert">
+                        {{ erro }}
+                    </div>
                     {% endif %}
 
-                    <button
-                        type="submit"
-                        class="btn-submit"
-                    >
+                    <button type="submit" class="btn-submit">
                         Conceder Acesso
                     </button>
 
                 </form>
-                </div>
-            
+            </div>
+
     </div>
 
 
 
-        </main>
-    </div>
+    </main>
+</div>
 
-    
+
 
 {% endblock %}

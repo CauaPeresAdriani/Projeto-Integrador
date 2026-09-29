@@ -4,10 +4,8 @@
 {% block title %}Criar Pesquisa | ClinSecure{% endblock %}
 
 {% block extra_css %}
-<link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    integrity="sha384-XGjxtQfXaH2tnPFa9x+ruJTuLE3Aa6LhHSWRr1XeTyhezb4abCG4ccI5AkVDxqC+" crossorigin="anonymous">
 {% endblock %}
 
 {% block content %}
@@ -33,34 +31,31 @@
                 <span>Dashboard</span>
             </a>
 
-            <a
-                href="{% url 'lista_pesquisas' %}"
-                class="nav-link active"
-                aria-current="page"
-            >
+            <a href="{% url 'lista_pesquisas' %}" class="nav-link active" aria-current="page">
                 <i class="bi bi-clipboard2-pulse"></i>
                 <span>Pesquisas</span>
             </a>
 
             {% if request.user.perfil == "administrador" %}
-                <a href="{% url 'cadastro' %}" class="nav-link">
-                    <i class="bi bi-people"></i>
-                    <span>Usuários</span>
-                </a>
+            <a href="{% url 'cadastro' %}" class="nav-link">
+                <i class="bi bi-people"></i>
+                <span>Usuários</span>
+            </a>
             {% endif %}
 
             {% if request.user.perfil == "responsavel" %}
-                <a href="{% url 'cadastro_participante' %}" class="nav-link">
-                    <i class="bi bi-person-plus"></i>
-                    <span>Participantes</span>
-                </a>
+            <a href="{% url 'cadastro_participante' %}" class="nav-link">
+                <i class="bi bi-person-plus"></i>
+                <span>Participantes</span>
+            </a>
             {% endif %}
 
-            {% if request.user.perfil == "responsavel" or request.user.perfil == "administrador" or request.user.perfil == "coordenador" %}
-                <a href="{% url 'upload_documento' %}" class="nav-link">
-                    <i class="bi bi-file-earmark-lock"></i>
-                    <span>Documentos</span>
-                </a>
+            {% if request.user.perfil == "responsavel" or request.user.perfil == "administrador" or request.user.perfil
+            == "coordenador" %}
+            <a href="{% url 'upload_documento' %}" class="nav-link">
+                <i class="bi bi-file-earmark-lock"></i>
+                <span>Documentos</span>
+            </a>
             {% endif %}
 
             <div class="sidebar-label mt-3">Conta</div>
@@ -80,12 +75,8 @@
     <div class="main-wrapper">
         <header class="topbar">
             <div class="d-flex align-items-center gap-3">
-                <button
-                    class="btn btn-light border mobile-menu"
-                    type="button"
-                    id="sidebarToggle"
-                    aria-label="Abrir menu"
-                >
+                <button class="btn btn-light border mobile-menu" type="button" id="sidebarToggle"
+                    aria-label="Abrir menu">
                     <i class="bi bi-list fs-5"></i>
                 </button>
 
@@ -111,10 +102,7 @@
                     {{ request.user.username|slice:":1"|upper }}
                 </span>
 
-                <a
-                    href="{% url 'logout' %}"
-                    class="btn btn-outline-secondary btn-sm ms-2 d-none d-md-inline-flex"
-                >
+                <a href="{% url 'logout' %}" class="btn btn-outline-secondary btn-sm ms-2 d-none d-md-inline-flex">
                     Sair
                 </a>
             </div>
@@ -122,21 +110,21 @@
 
 
         <main class="content-area">
-             <section class="welcome-card mb-4">
+            <section class="welcome-card mb-4">
                 <div class="row align-items-center g-3">
                     <div class="col-lg-8">
                         <div class="small opacity-75 mb-2">
                             Cadastrar dados da pesquisa
                         </div>
-                        
+
                         <p class="h4 fw-bold mb-2">
                             <strong>Criar Nova Pesquisa:</strong>
-                            
+
                         </p>
                         {% if erro %}
-                            <p style="color: red;">
-                                {{ erro }}
-                            </p>
+                        <p style="color: red;">
+                            {{ erro }}
+                        </p>
                         {% endif %}
                     </div>
 
@@ -148,184 +136,140 @@
                     </div>
                 </div>
             </section>
-    
-                
-            
+
+
+
 
 
             <section class="row g-3 mb-4" aria-labelledby="informacoes-title">
                 <h1>Criar nova pesquisa</h1>
 
                 {% if erro %}
-                    <p style="color: red;">
-                        {{ erro }}
-                    </p>
+                <p style="color: red;">
+                    {{ erro }}
+                </p>
                 {% endif %}
 
                 <div class="card shadow p-4 dados-card">
 
 
-                <form method="post">
+                    <form method="post">
 
-                    {% csrf_token %}
+                        {% csrf_token %}
 
-                    <div class="labels">
-                        <label class="labels" for="nome">
-                            Nome da pesquisa:
-                        </label>
+                        <div class="labels">
+                            <label class="labels" for="nome">
+                                Nome da pesquisa:
+                            </label>
 
-                        <input class="inputs"
-                            type="text"
-                            id="nome"
-                            name="nome"
-                            maxlength="150"
-                            value="{{ nome }}"
-                            required
-                        >
-                    </div>
-
-                    <br>
-
-                    <div>
-                        <label class="labels" for="descricao">
-                            Descrição:
-                        </label>
-
-                        <textarea class="inputs"
-                            id="descricao"
-                            name="descricao"
-                            rows="5"
-                            cols="50"
-                        >{{ descricao }}</textarea>
-                    </div>
-
-                    <br>
-
-                    <div>
-                        <label class="labels" for="status">
-                            Status:
-                        </label>
-
-                        <select
-                            id="status"
-                            name="status"
-                            required
-                        >
-                            <option
-                                value="planejamento"
-                                {% if status == "planejamento" %}selected{% endif %}
-                            >
-                                Planejamento
-                            </option>
-
-                            <option
-                                value="ativa"
-                                {% if status == "ativa" %}selected{% endif %}
-                            >
-                                Ativa
-                            </option>
-
-                            <option
-                                value="encerrada"
-                                {% if status == "encerrada" %}selected{% endif %}
-                            >
-                                Encerrada
-                            </option>
-
-                            <option
-                                value="cancelada"
-                                {% if status == "cancelada" %}selected{% endif %}
-                            >
-                                Cancelada
-                            </option>
-                        </select>
-                    </div>
-
-                    <br>
-
-                    <div>
-                        <label class="labels" for="data_inicio">
-                            Data de início:
-                        </label>
-
-                        <input class="inputs"
-                            type="date"
-                            id="data_inicio"
-                            name="data_inicio"
-                            value="{{ data_inicio }}"
-                        >
-                    </div>
-
-                    <br>
-
-                    <div>
-                        <label class="labels" for="data_fim">
-                            Data de fim:
-                        </label>
-
-                        <input class="inputs"
-                            type="date"
-                            id="data_fim"
-                            name="data_fim"
-                            value="{{ data_fim }}"
-                        >
-                    </div>
-
-                    <br>
-
-                    <div>
-                        <label class="labels" for="pesquisadores">
-                            Pesquisadores vinculados:
-                        </label>
+                            <input class="inputs" type="text" id="nome" name="nome" maxlength="150" value="{{ nome }}"
+                                required>
+                        </div>
 
                         <br>
 
-                        <select
-                            id="pesquisadores"
-                            name="pesquisadores"
-                            multiple
-                            size="6"
-                        >
+                        <div>
+                            <label class="labels" for="descricao">
+                                Descrição:
+                            </label>
 
-                            {% for pesquisador in pesquisadores %}
+                            <textarea class="inputs" id="descricao" name="descricao" rows="5"
+                                cols="50">{{ descricao }}</textarea>
+                        </div>
 
-                                <option
-                                    value="{{ pesquisador.id }}"
-                                    {% if pesquisador.id|stringformat:"s" in pesquisadores_selecionados %}
-                                        selected
-                                    {% endif %}
-                                >
+                        <br>
+
+                        <div>
+                            <label class="labels" for="status">
+                                Status:
+                            </label>
+
+                            <select id="status" name="status" required>
+                                <option value="planejamento" {% if status=="planejamento" %}selected{% endif %}>
+                                    Planejamento
+                                </option>
+
+                                <option value="ativa" {% if status=="ativa" %}selected{% endif %}>
+                                    Ativa
+                                </option>
+
+                                <option value="encerrada" {% if status=="encerrada" %}selected{% endif %}>
+                                    Encerrada
+                                </option>
+
+                                <option value="cancelada" {% if status=="cancelada" %}selected{% endif %}>
+                                    Cancelada
+                                </option>
+                            </select>
+                        </div>
+
+                        <br>
+
+                        <div>
+                            <label class="labels" for="data_inicio">
+                                Data de início:
+                            </label>
+
+                            <input class="inputs" type="date" id="data_inicio" name="data_inicio"
+                                value="{{ data_inicio }}">
+                        </div>
+
+                        <br>
+
+                        <div>
+                            <label class="labels" for="data_fim">
+                                Data de fim:
+                            </label>
+
+                            <input class="inputs" type="date" id="data_fim" name="data_fim" value="{{ data_fim }}">
+                        </div>
+
+                        <br>
+
+                        <div>
+                            <label class="labels" for="pesquisadores">
+                                Pesquisadores vinculados:
+                            </label>
+
+                            <br>
+
+                            <select id="pesquisadores" name="pesquisadores" multiple size="6">
+
+                                {% for pesquisador in pesquisadores %}
+
+                                <option value="{{ pesquisador.id }}" {% if pesquisador.id|stringformat:"s" in
+                                    pesquisadores_selecionados %} selected {% endif %}>
                                     {{ pesquisador.username }}
                                     -
                                     {{ pesquisador.email }}
                                 </option>
 
-                            {% empty %}
+                                {% empty %}
 
                                 <option disabled>
                                     Nenhum pesquisador disponível.
                                 </option>
 
-                            {% endfor %}
+                                {% endfor %}
 
-                        </select>
+                            </select>
 
-                        <p>
-                            Segure Ctrl para selecionar mais de um pesquisador.
-                        </p>
-                    </div>
+                            <p>
+                                Segure Ctrl para selecionar mais de um pesquisador.
+                            </p>
+                        </div>
 
-                    <br>
+                        <br>
 
-                    <button class="btn-submit" type="submit">
-                        Criar pesquisa
-                    </button>
+                        <button class="btn-submit" type="submit">
+                            Criar pesquisa
+                        </button>
 
-                    <a href="{% url 'lista_pesquisas' %}" style="color: red;">
-                        Cancelar Criação
-                    </a>
+                        <a href="{% url 'lista_pesquisas' %}" style="color: red;">
+                            Cancelar Criação
+                        </a>
 
-                </form>
+                    </form>
 
                 </div>
 
@@ -339,7 +283,7 @@
 
 </div>
 {% endif %}
-    
+
 
 
 {% endblock %}

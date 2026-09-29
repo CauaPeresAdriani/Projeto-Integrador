@@ -4,10 +4,8 @@
 {% block title %}Detalhe da Pesquisa | ClinSecure{% endblock %}
 
 {% block extra_css %}
-<link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    integrity="sha384-XGjxtQfXaH2tnPFa9x+ruJTuLE3Aa6LhHSWRr1XeTyhezb4abCG4ccI5AkVDxqC+" crossorigin="anonymous">
 {% endblock %}
 
 {% block content %}
@@ -33,34 +31,31 @@
                 <span>Dashboard</span>
             </a>
 
-            <a
-                href="{% url 'lista_pesquisas' %}"
-                class="nav-link active"
-                aria-current="page"
-            >
+            <a href="{% url 'lista_pesquisas' %}" class="nav-link active" aria-current="page">
                 <i class="bi bi-clipboard2-pulse"></i>
                 <span>Pesquisas</span>
             </a>
 
             {% if request.user.perfil == "administrador" %}
-                <a href="{% url 'cadastro' %}" class="nav-link">
-                    <i class="bi bi-people"></i>
-                    <span>Usuários</span>
-                </a>
+            <a href="{% url 'cadastro' %}" class="nav-link">
+                <i class="bi bi-people"></i>
+                <span>Usuários</span>
+            </a>
             {% endif %}
 
             {% if request.user.perfil == "responsavel" %}
-                <a href="{% url 'cadastro_participante' %}" class="nav-link">
-                    <i class="bi bi-person-plus"></i>
-                    <span>Participantes</span>
-                </a>
+            <a href="{% url 'cadastro_participante' %}" class="nav-link">
+                <i class="bi bi-person-plus"></i>
+                <span>Participantes</span>
+            </a>
             {% endif %}
 
-            {% if request.user.perfil == "responsavel" or request.user.perfil == "administrador" or request.user.perfil == "coordenador" %}
-                <a href="{% url 'upload_documento' %}" class="nav-link">
-                    <i class="bi bi-file-earmark-lock"></i>
-                    <span>Documentos</span>
-                </a>
+            {% if request.user.perfil == "responsavel" or request.user.perfil == "administrador" or request.user.perfil
+            == "coordenador" %}
+            <a href="{% url 'upload_documento' %}" class="nav-link">
+                <i class="bi bi-file-earmark-lock"></i>
+                <span>Documentos</span>
+            </a>
             {% endif %}
 
             <div class="sidebar-label mt-3">Conta</div>
@@ -80,12 +75,8 @@
     <div class="main-wrapper">
         <header class="topbar">
             <div class="d-flex align-items-center gap-3">
-                <button
-                    class="btn btn-light border mobile-menu"
-                    type="button"
-                    id="sidebarToggle"
-                    aria-label="Abrir menu"
-                >
+                <button class="btn btn-light border mobile-menu" type="button" id="sidebarToggle"
+                    aria-label="Abrir menu">
                     <i class="bi bi-list fs-5"></i>
                 </button>
 
@@ -111,15 +102,12 @@
                     {{ request.user.username|slice:":1"|upper }}
                 </span>
 
-                <a
-                    href="{% url 'logout' %}"
-                    class="btn btn-outline-secondary btn-sm ms-2 d-none d-md-inline-flex"
-                >
+                <a href="{% url 'logout' %}" class="btn btn-outline-secondary btn-sm ms-2 d-none d-md-inline-flex">
                     Sair
                 </a>
             </div>
         </header>
-        
+
         <main class="content-area">
 
             <section class="welcome-card mb-4">
@@ -135,10 +123,7 @@
                     </div>
 
                     <div class="col-lg-4 text-lg-end">
-                        <a
-                            href="{% url 'home' %}"
-                            class="btn btn-light"
-                        >
+                        <a href="{% url 'home' %}" class="btn btn-light">
                             <i class="bi bi-arrow-left me-2"></i>
                             Voltar para o dashboard
                         </a>
@@ -148,68 +133,46 @@
             </section>
 
 
-            
 
 
 
-           
 
-                <div class="card shadow p-4 dados-card">
 
-                    <h2 class="login-title">
-                        Cadastro de participante
-                    </h2>
 
-                    <form method="POST">
+            <div class="card shadow p-4 dados-card">
 
-                        {% csrf_token %}
+                <h2 class="login-title">
+                    Cadastro de participante
+                </h2>
 
-                        <div class="form-group">
-                            <label for="nome" class="labels">
-                                Nome completo
-                            </label>
+                <form method="POST">
 
-                            <input
-                                type="text"
-                                name="nome"
-                                id="nome"
-                                class="inputs"
-                                autocomplete="name"
-                                required
-                            >
-                        </div>
+                    {% csrf_token %}
 
-                        <div class="form-group">
-                            <label for="cpf" class="labels">
-                                CPF
-                            </label>
+                    <div class="form-group">
+                        <label for="nome" class="labels">
+                            Nome completo
+                        </label>
 
-                            <input
-                                type="text"
-                                name="cpf"
-                                id="cpf"
-                                class="inputs"
-                                inputmode="numeric"
-                                maxlength="14"
-                                placeholder="000.000.000-00"
-                                autocomplete="off"
-                                required
-                            >
-                        </div>
+                        <input type="text" name="nome" id="nome" class="inputs" autocomplete="name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cpf" class="labels">
+                            CPF
+                        </label>
+
+                        <input type="text" name="cpf" id="cpf" class="inputs" inputmode="numeric" maxlength="14"
+                            placeholder="000.000.000-00" autocomplete="off" required>
+                    </div>
 
                     <div class="form-group">
                         <label for="data_nascimento" class="labels">
                             Data de nascimento
                         </label>
 
-                        <input
-                            type="date"
-                            name="data_nascimento"
-                            id="data_nascimento"
-                            class="inputs"
-                            autocomplete="bday"
-                            required
-                        >
+                        <input type="date" name="data_nascimento" id="data_nascimento" class="inputs"
+                            autocomplete="bday" required>
                     </div>
 
                     <div class="form-group">
@@ -217,15 +180,8 @@
                             E-mail
                         </label>
 
-                        <input
-                            type="email"
-                            name="email"
-                            id="email"
-                            class="inputs"
-                            autocomplete="email"
-                            placeholder="participante@email.com"
-                            required
-                        >
+                        <input type="email" name="email" id="email" class="inputs" autocomplete="email"
+                            placeholder="participante@email.com" required>
                     </div>
 
                     <div class="form-group">
@@ -234,12 +190,7 @@
                             Pesquisa
                         </label>
 
-                        <select
-                            name="pesquisa"
-                            id="pesquisa"
-                            class="inputs"
-                            required
-                        >
+                        <select name="pesquisa" id="pesquisa" class="inputs" required>
 
                             <option value="">
                                 Selecione uma pesquisa
@@ -247,10 +198,10 @@
 
                             {% for pesquisa in pesquisas %}
 
-                                <option value="{{ pesquisa.id }}">
-                                    {{ pesquisa.registro_pesquisa }} -
-                                    {{ pesquisa.nome }}
-                                </option>
+                            <option value="{{ pesquisa.id }}">
+                                {{ pesquisa.registro_pesquisa }} -
+                                {{ pesquisa.nome }}
+                            </option>
 
                             {% endfor %}
 
@@ -263,10 +214,7 @@
                         antes de serem armazenados.
                     </p>
 
-                    <button
-                        type="submit"
-                        class="btn-submit"
-                    >
+                    <button type="submit" class="btn-submit">
                         Cadastrar participante
                     </button>
 
@@ -274,13 +222,13 @@
 
                 {% if erro %}
 
-                    <div class="alert-error" role="alert">
-                        {{ erro }}
-                    </div>
+                <div class="alert-error" role="alert">
+                    {{ erro }}
+                </div>
 
                 {% endif %}
 
-            
+
 
 
 
@@ -311,35 +259,35 @@
 {% block extra_js %}
 
 <script>
-const cpfInput = document.getElementById("cpf");
+    const cpfInput = document.getElementById("cpf");
 
-cpfInput.addEventListener("input", function () {
+    cpfInput.addEventListener("input", function () {
 
-    let cpf = this.value.replace(/\D/g, "");
+        let cpf = this.value.replace(/\D/g, "");
 
-    cpf = cpf.substring(0, 11);
+        cpf = cpf.substring(0, 11);
 
-    if (cpf.length > 9) {
-        cpf = cpf.replace(
-            /(\d{3})(\d{3})(\d{3})(\d{1,2})/,
-            "$1.$2.$3-$4"
-        );
+        if (cpf.length > 9) {
+            cpf = cpf.replace(
+                /(\d{3})(\d{3})(\d{3})(\d{1,2})/,
+                "$1.$2.$3-$4"
+            );
 
-    } else if (cpf.length > 6) {
-        cpf = cpf.replace(
-            /(\d{3})(\d{3})(\d{1,3})/,
-            "$1.$2.$3"
-        );
+        } else if (cpf.length > 6) {
+            cpf = cpf.replace(
+                /(\d{3})(\d{3})(\d{1,3})/,
+                "$1.$2.$3"
+            );
 
-    } else if (cpf.length > 3) {
-        cpf = cpf.replace(
-            /(\d{3})(\d{1,3})/,
-            "$1.$2"
-        );
-    }
+        } else if (cpf.length > 3) {
+            cpf = cpf.replace(
+                /(\d{3})(\d{1,3})/,
+                "$1.$2"
+            );
+        }
 
-    this.value = cpf;
-});
+        this.value = cpf;
+    });
 </script>
 
 {% endblock %}

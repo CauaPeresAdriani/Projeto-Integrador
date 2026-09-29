@@ -4,10 +4,8 @@
 {% block title %}Pesquisas | ClinSecure{% endblock %}
 
 {% block extra_css %}
-<link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    integrity="sha384-XGjxtQfXaH2tnPFa9x+ruJTuLE3Aa6LhHSWRr1XeTyhezb4abCG4ccI5AkVDxqC+" crossorigin="anonymous">
 {% endblock %}
 
 {% block content %}
@@ -39,24 +37,25 @@
             </a>
 
             {% if request.user.perfil == "administrador" %}
-                <a href="{% url 'cadastro' %}" class="nav-link">
-                    <i class="bi bi-people"></i>
-                    <span>Usuários</span>
-                </a>
+            <a href="{% url 'cadastro' %}" class="nav-link">
+                <i class="bi bi-people"></i>
+                <span>Usuários</span>
+            </a>
             {% endif %}
 
             {% if request.user.perfil == "responsavel" %}
-                <a href="{% url 'cadastro_participante' %}" class="nav-link">
-                    <i class="bi bi-person-plus"></i>
-                    <span>Participantes</span>
-                </a>
+            <a href="{% url 'cadastro_participante' %}" class="nav-link">
+                <i class="bi bi-person-plus"></i>
+                <span>Participantes</span>
+            </a>
             {% endif %}
 
-            {% if request.user.perfil == "responsavel" or request.user.perfil == "administrador" or request.user.perfil == "coordenador" %}
-                <a href="{% url 'upload_documento' %}" class="nav-link">
-                    <i class="bi bi-file-earmark-lock"></i>
-                    <span>Documentos</span>
-                </a>
+            {% if request.user.perfil == "responsavel" or request.user.perfil == "administrador" or request.user.perfil
+            == "coordenador" %}
+            <a href="{% url 'upload_documento' %}" class="nav-link">
+                <i class="bi bi-file-earmark-lock"></i>
+                <span>Documentos</span>
+            </a>
             {% endif %}
 
             <div class="sidebar-label mt-3">Conta</div>
@@ -76,12 +75,8 @@
     <div class="main-wrapper">
         <header class="topbar">
             <div class="d-flex align-items-center gap-3">
-                <button
-                    class="btn btn-light border mobile-menu"
-                    type="button"
-                    id="sidebarToggle"
-                    aria-label="Abrir menu"
-                >
+                <button class="btn btn-light border mobile-menu" type="button" id="sidebarToggle"
+                    aria-label="Abrir menu">
                     <i class="bi bi-list fs-5"></i>
                 </button>
 
@@ -105,10 +100,7 @@
                     {{ request.user.username|slice:":1"|upper }}
                 </span>
 
-                <a
-                    href="{% url 'logout' %}"
-                    class="btn btn-outline-secondary btn-sm ms-2 d-none d-md-inline-flex"
-                >
+                <a href="{% url 'logout' %}" class="btn btn-outline-secondary btn-sm ms-2 d-none d-md-inline-flex">
                     Sair
                 </a>
             </div>
@@ -121,15 +113,15 @@
                         <div class="small opacity-75 mb-2">
                             Cadastrar dados da pesquisa
                         </div>
-                        
+
                         <p class="h4 fw-bold mb-2">
                             <strong>Enviar documentos:</strong>
-                            
+
                         </p>
                         {% if erro %}
-                            <p style="color: red;">
-                                {{ erro }}
-                            </p>
+                        <p style="color: red;">
+                            {{ erro }}
+                        </p>
                         {% endif %}
                     </div>
 
@@ -146,91 +138,72 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <div>
                         <div class="eyebrow">Uploads autorizados</div>
-                            <h2 id="pesquisas-title" class="h5 mb-0">
-                                Adicionar Arquivos e Exames:
-                            </h2>
-                        </div>
+                        <h2 id="pesquisas-title" class="h5 mb-0">
+                            Adicionar Arquivos e Exames:
+                        </h2>
                     </div>
-                
+                </div>
 
 
-                    <div class="card shadow p-4 dados-card" >
-                    
-                       
-                        <form method="POST" enctype="multipart/form-data">
-                            {% csrf_token %}
 
-                            <div class="form-group">
+                <div class="card shadow p-4 dados-card">
 
-                                <label class="labels" for="participante">Participante:</label>
 
-                                <select
-                                    class="inputs"
-                                    name="participante"
-                                    id="participante"
-                                    required
-                                >
-                                    <option value="">
-                                        Selecione um participante disponível
-                                    </option>
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
 
-                                    {% for participante in participantes %}
-                                        <option value="{{ participante.id }}">
-                                            {{ participante.registro_participante }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
+                        <div class="form-group">
 
-                            </div>
+                            <label class="labels" for="participante">Participante:</label>
 
-                            <br><br>
+                            <select class="inputs" name="participante" id="participante" required>
+                                <option value="">
+                                    Selecione um participante disponível
+                                </option>
 
-                            <div class="form-group">
+                                {% for participante in participantes %}
+                                <option value="{{ participante.id }}">
+                                    {{ participante.registro_participante }}
+                                </option>
+                                {% endfor %}
+                            </select>
 
-                                <label class="labels" for="arquivo">Documento:</label>
+                        </div>
 
-                                <input
-                                    type="file"
-                                    name="arquivo"
-                                    id="arquivo"
-                                    accept=".pdf,application/pdf"
-                                    required
-                                >
+                        <br><br>
 
-                                <p
-                                    id="erro-arquivo"
-                                    style="display: none; color: red;"
-                                ></p>
+                        <div class="form-group">
 
-                            </div>
+                            <label class="labels" for="arquivo">Documento:</label>
 
-                            <br><br>
+                            <input type="file" name="arquivo" id="arquivo" accept=".pdf,application/pdf" required>
 
-                            <button
-                                class="btn-submit"
-                                id="btn-upload"
-                                type="submit"
-                                disabled
-                            >
-                                Enviar documento
-                            </button>
+                            <p id="erro-arquivo" style="display: none; color: red;"></p>
 
-                            {% if erro %}
-                                <p>{{ erro }}</p>
-                            {% endif %}
+                        </div>
 
-                        </form>
+                        <br><br>
+
+                        <button class="btn-submit" id="btn-upload" type="submit" disabled>
+                            Enviar documento
+                        </button>
+
+                        {% if erro %}
+                        <p>{{ erro }}</p>
+                        {% endif %}
+
+                    </form>
 
 
 
 
-                                            
-                    </div> 
-                </div>      
-            </section>
-        </main>
 
+                </div>
     </div>
+    </section>
+    </main>
+
+</div>
 
 </div>
 
@@ -279,7 +252,7 @@
             return;
         }
 
-        
+
         botaoUpload.disabled = false;
     });
 </script>

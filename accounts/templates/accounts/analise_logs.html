@@ -3,7 +3,8 @@
 {% block title %}Análise de Logs | ClinSecure{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    integrity="sha384-XGjxtQfXaH2tnPFa9x+ruJTuLE3Aa6LhHSWRr1XeTyhezb4abCG4ccI5AkVDxqC+" crossorigin="anonymous">
 {% endblock %}
 
 {% block content %}
@@ -41,7 +42,8 @@
             </a>
             {% endif %}
 
-            {% if request.user.perfil == "responsavel" or request.user.perfil == "administrador" or request.user.perfil == "coordenador" %}
+            {% if request.user.perfil == "responsavel" or request.user.perfil == "administrador" or request.user.perfil
+            == "coordenador" %}
             <a href="{% url 'upload_documento' %}" class="nav-link">
                 <i class="bi bi-file-earmark-lock"></i><span>Documentos</span>
             </a>
@@ -108,7 +110,8 @@
                     <div class="col-lg-8">
                         <div class="small opacity-75 mb-2">Monitoramento e segurança</div>
                         <h2 class="h4 fw-bold mb-2">Análise dos Logs de Auditoria</h2>
-                        <p class="mb-0 opacity-75">Acompanhe os eventos registrados pelo sistema, falhas de autenticação e atividades recentes.</p>
+                        <p class="mb-0 opacity-75">Acompanhe os eventos registrados pelo sistema, falhas de autenticação
+                            e atividades recentes.</p>
                     </div>
                     <div class="col-lg-4 text-lg-end">
                         <span class="btn btn-light"><i class="bi bi-shield-check me-2"></i>Auditoria ativa</span>
@@ -222,10 +225,10 @@
 
 {% block extra_js %}
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    const sidebar = document.getElementById("clinSidebar");
-    const toggle = document.getElementById("sidebarToggle");
-    if (toggle && sidebar) toggle.addEventListener("click", () => sidebar.classList.toggle("show"));
-});
+    document.addEventListener("DOMContentLoaded", function () {
+        const sidebar = document.getElementById("clinSidebar");
+        const toggle = document.getElementById("sidebarToggle");
+        if (toggle && sidebar) toggle.addEventListener("click", () => sidebar.classList.toggle("show"));
+    });
 </script>
 {% endblock %}
