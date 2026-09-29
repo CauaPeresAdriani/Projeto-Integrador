@@ -12,6 +12,7 @@ jobs:
 
   secrets:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v6
         with:
@@ -23,24 +24,26 @@ jobs:
           extra_args: --results=verified,unknown
 
   dependencies:
-  runs-on: ubuntu-latest
-  steps:
-    - uses: actions/checkout@v6
+    runs-on: ubuntu-latest
 
-    - uses: aquasecurity/trivy-action@master
-      with:
-        scan-type: fs
-        scan-ref: .
-        scanners: vuln
-        severity: HIGH,CRITICAL
-        exit-code: '1'
+    steps:
+      - uses: actions/checkout@v6
+      
+      - uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          exit-code: '1'
 
   sast:
-  runs-on: ubuntu-latest
-  container:
-    image: semgrep/semgrep
+    runs-on: ubuntu-latest
+    
+    container:
+      image: semgrep/semgrep
 
-  steps:
-    - uses: actions/checkout@v6
+    steps:
+      - uses: actions/checkout@v6
 
-    - run: semgrep scan --config auto --error .
+      - run: semgrep scan --config auto --error .
