@@ -48,8 +48,7 @@
             </a>
             {% endif %}
 
-            {% if request.user.perfil == "responsavel" or request.user.perfil == "administrador" or request.user.perfil
-            == "coordenador" %}
+            {% if request.user.perfil in "responsavel administrador coordenador" %}
             <a href="{% url 'upload_documento' %}" class="nav-link">
                 <i class="bi bi-file-earmark-lock"></i>
                 <span>Documentos</span>
