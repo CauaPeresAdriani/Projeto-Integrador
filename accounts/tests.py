@@ -23,7 +23,7 @@ from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django_otp.plugins.otp_totp.models import TOTPDevice
-
+from django.contrib.auth.password_validation import validate_password
 from .crypto import decrypt_data, decrypt_file, encrypt_data, encrypt_file
 from .models import (
     Acesso,
@@ -385,7 +385,9 @@ class PasswordRecoveryTests(ClinSecureBaseTest):
         token = default_token_generator.make_token(self.responsavel_a)
         uid = urlsafe_base64_encode(force_bytes(self.responsavel_a.pk))
 
-        self.responsavel_a.set_password("OutraSenha123!")
+        senha = "OutraSenha123!"
+        validate_password(senha, user=self.responsavel_a)
+        self.responsavel_a.set_password(senha)
         self.responsavel_a.save()
 
         response = self.client.get(
