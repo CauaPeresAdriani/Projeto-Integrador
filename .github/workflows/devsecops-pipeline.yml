@@ -11,44 +11,54 @@ permissions:
 jobs:
 
   secrets:
+    name: Secrets Scan
     runs-on: ubuntu-latest
-
+    
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - name: Baixar código
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           fetch-depth: 0
 
-      - uses: trufflesecurity/trufflehog@f714bf454f350590f4a24c3ddb1aef02c35bf5b6
+      - name: Verificar secrets
+        uses: trufflesecurity/trufflehog@f714bf454f350590f4a24c3ddb1aef02c35bf5b6
         with:
           path: ./
           extra_args: --results=verified,unknown
 
   dependencies:
+    name: Dependency Scan
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
-      
-      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+      - name: Baixar código
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
+      - name: Verificar vulnerabilidades nas dependências
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
           scan-type: fs
           scan-ref: .
           scanners: vuln
           severity: HIGH,CRITICAL
           exit-code: '1'
-- name: 
+
   sast:
+    name: SAST - Análise de código
     runs-on: ubuntu-latest
 
     container:
       image: semgrep/semgrep
 
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - name: Baixar código
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
 
-      - run: semgrep scan --config auto --error .
+      - name: Executar análise Semgrep
+        run: semgrep scan --config auto --error .
 
   tests:
+    name: Testes Django
     runs-on: ubuntu-latest
 
     services:
