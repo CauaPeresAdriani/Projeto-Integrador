@@ -47,3 +47,57 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
 
       - run: semgrep scan --config auto --error .
+      
+  tests:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: clinsecure
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      SECRET_KEY: chave-secreta-apenas-para-testes
+      FIELD_ENCRYPTION_KEY: 2Y8j4qR8mJ6vN3xL0pKs7wV5cT1zA9bC2dE4fG6hI8j=
+      DEBUG: "True"
+      DB_NAME: clinsecure
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+
+      - name: Instalar dependências do MySQL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            default-libmysqlclient-dev \
+            build-essential \
+            pkg-config
+
+      - name: Instalar dependências Python
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Executar testes Django
+        run: |
+          python manage.py test accounts --verbosity=2
