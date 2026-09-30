@@ -57,7 +57,7 @@ pydantic==2.13.4
 pydantic-settings==2.15.0
 pydantic_core==2.46.4
 Pygments==2.21.0
-PyJWT==2.13.0
+PyJWT==2.14.0
 python-dotenv==1.2.2
 python-multipart==0.0.32
 PyYAML==6.0.3
@@ -69,7 +69,6 @@ rpds-py==2026.6.3
 ruamel.yaml==0.19.1
 ruamel.yaml.clib==0.2.15
 semantic-version==2.10.0
-semgrep==1.175.0
 sqlparse==0.6.0
 sse-starlette==3.4.8
 starlette==1.6.0
