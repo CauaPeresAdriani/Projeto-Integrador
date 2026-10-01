@@ -76,7 +76,7 @@ stevedore==5.9.1
 tomli==2.4.1
 typing-inspection==0.4.4
 typing_extensions==4.16.0
-urllib3==2.7.0
+urllib3==2.8.0
 userpath==1.9.2
 uvicorn==0.52.4
 wcmatch==8.5.2
