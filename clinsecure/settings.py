@@ -193,3 +193,12 @@ import os
 # Expiração do Token em 1 hora
 PASSWORD_RESET_TIMEOUT = 3600
 
+ # Configuração de Cache para Rate Limiting
+    # Para ambiente de produção distribuído (Gunicorn com múltiplos workers):
+CACHES = {
+        'default': {
+            # Opção 1 (Simples, sem infraestrutura externa): Armazena contadores no próprio banco MySQL
+            'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+            'LOCATION': 'clinsecure_cache_table',
+        }
+    }

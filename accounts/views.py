@@ -23,6 +23,8 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
+from django_ratelimit.decorators import ratelimit
+from django.http import HttpResponse
 
 from django_otp.plugins.otp_totp.models import TOTPDevice
 
@@ -299,6 +301,7 @@ def cadastro_view(request):
     return render(request, 'accounts/cadastro.html', {'erro': erro})
 
 @login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def cadastro_participante_view(request):
 
     if request.user.perfil != "responsavel":
@@ -938,6 +941,7 @@ def verificar_2fa_view(request):
 
 
 @login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def home_view(request):
     context = {}
     usuario = request.user
@@ -1233,6 +1237,7 @@ def confirmar_recuperacao_senha_view(request, uidb64, token):
 
 
 @login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def upload_documento_view(request):
     if request.user.perfil not in [
         "responsavel",
@@ -1359,6 +1364,7 @@ def upload_documento_view(request):
 
 
 @login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def download_documento_view(request, documento_id):
 
     try:
@@ -1407,6 +1413,7 @@ def download_documento_view(request, documento_id):
         )
 
 @login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def visualizar_documento_view(request, documento_id):
     
     try:
@@ -1456,6 +1463,7 @@ def visualizar_documento_view(request, documento_id):
 
 
 @login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def conceder_acesso_documento_view(request, documento_id):
 
     if request.user.perfil != "coordenador":
@@ -1559,6 +1567,7 @@ def conceder_acesso_documento_view(request, documento_id):
 
 
 @login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def revogar_acesso_documento_view(request, acesso_id):
 
     if request.method != "POST":
@@ -1618,8 +1627,9 @@ def revogar_acesso_documento_view(request, acesso_id):
 
 ## LOGICA DE PESQUISAS ##
 
+
 @login_required
-@login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def lista_pesquisas_view(request):
 
     context = {}
@@ -1683,6 +1693,7 @@ def lista_pesquisas_view(request):
 
 
 @login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def detalhe_pesquisa_view(request, pesquisa_id):
 
     try:
@@ -1733,6 +1744,7 @@ def detalhe_pesquisa_view(request, pesquisa_id):
     )
 
 @login_required
+<<<<<<< HEAD
 def criar_pesquisa_view(request):
 
     # Apenas responsáveis podem criar pesquisas.
@@ -1931,6 +1943,9 @@ def criar_pesquisa_view(request):
     )
 
 @login_required
+=======
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
+>>>>>>> 80bab8e (Fix: Ausencia de rate limiting por IP closes #88)
 def editar_pesquisa_view(request, pesquisa_id):
 
     # Busca a pesquisa pelo ID.
@@ -2060,6 +2075,7 @@ def editar_pesquisa_view(request, pesquisa_id):
     )
 
 @login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def cadastrar_dado_pesquisa_view(request, participacao_id):
 
     try:
@@ -2160,6 +2176,7 @@ def cadastrar_dado_pesquisa_view(request, participacao_id):
     )
 
 @login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def detalhe_participante_view(request, participante_id):
 
     try:
@@ -2312,6 +2329,7 @@ VERSAO_CONSENTIMENTO = "1.0"
 
 
 @login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def meus_dados_view(request):
     if request.user.perfil != "participante":
         return HttpResponse("Acesso negado.", status=403)
@@ -2361,6 +2379,7 @@ def meus_dados_view(request):
 
 
 @login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def consentir_dados_view(request):
     if request.user.perfil != "participante":
         return HttpResponse("Acesso negado.", status=403)
@@ -2418,6 +2437,7 @@ def consentir_dados_view(request):
 
 
 @login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def revogar_consentimento_view(request, consentimento_id):
     if request.user.perfil != "participante":
         return HttpResponse("Acesso negado.", status=403)
@@ -2461,6 +2481,7 @@ def revogar_consentimento_view(request, consentimento_id):
 
 
 @login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def exportar_dados_view(request):
     if request.user.perfil != "participante":
         return HttpResponse("Acesso negado.", status=403)
@@ -2570,6 +2591,7 @@ def exportar_dados_view(request):
 
 
 @login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def excluir_dados_view(request):
     if request.user.perfil != "participante":
         return HttpResponse("Acesso negado.", status=403)
@@ -2642,6 +2664,7 @@ def excluir_dados_view(request):
     return redirect("login")
 
 @login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def analise_logs_view(request):
     # Somente administrador e coordenador podem analisar os logs.
     if request.user.perfil not in ['administrador', 'coordenador']:
