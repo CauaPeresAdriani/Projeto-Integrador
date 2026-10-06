@@ -1744,7 +1744,6 @@ def detalhe_pesquisa_view(request, pesquisa_id):
     )
 
 @login_required
-<<<<<<< HEAD
 def criar_pesquisa_view(request):
 
     # Apenas responsáveis podem criar pesquisas.
@@ -1943,9 +1942,6 @@ def criar_pesquisa_view(request):
     )
 
 @login_required
-=======
-@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
->>>>>>> 80bab8e (Fix: Ausencia de rate limiting por IP closes #88)
 def editar_pesquisa_view(request, pesquisa_id):
 
     # Busca a pesquisa pelo ID.
