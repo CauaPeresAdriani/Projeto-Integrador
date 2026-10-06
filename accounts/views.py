@@ -905,11 +905,11 @@ def verificar_2fa_view(request):
 
                 # Registra o bloqueio do 2FA.
                 AuditLog.objects.create(
-                usuario=usuario,
-                evento='Bloqueio 2FA',
-                ip=request.META.get('REMOTE_ADDR'),
-                resultado='Bloqueado',
-                detalhes='2FA bloqueado após 5 tentativas incorretas.'
+                    usuario=usuario,
+                    evento='Bloqueio 2FA',
+                    ip=request.META.get('REMOTE_ADDR'),
+                    resultado='Bloqueado',
+                    detalhes='2FA bloqueado após 5 tentativas incorretas.'
                 )
 
                 usuario.save()
