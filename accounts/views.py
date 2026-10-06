@@ -186,8 +186,6 @@ def meu_login_view(request):
                 # Cria um atraso conforme o número de tentativas
                 atraso = usuario_cadastrado.tentativas_login
 
-                time.sleep(atraso)
-
                 # Bloqueia após 5 tentativas
                 if usuario_cadastrado.tentativas_login >= 5:
 
@@ -212,6 +210,12 @@ def meu_login_view(request):
                             'de login incorretas.'
                         )
                     )
+
+                    usuario_cadastrado.save()
+
+                    response = HttpResponse("Muitas tentativas.", status=429)
+                    response['Retry-After'] = str(usuario_cadastrado.tentativas_login)
+                    return response
 
                 else:
 
@@ -887,7 +891,6 @@ def verificar_2fa_view(request):
 
             # Cria atraso progressivo.
             atraso = usuario.tentativas_2fa
-            time.sleep(atraso)
 
             # Bloqueia após 5 tentativas.
             if usuario.tentativas_2fa >= 5:
@@ -908,6 +911,12 @@ def verificar_2fa_view(request):
                 resultado='Bloqueado',
                 detalhes='2FA bloqueado após 5 tentativas incorretas.'
                 )
+
+                usuario.save()
+
+                response = HttpResponse("Muitas tentativas.", status=429)
+                response['Retry-After'] = str(usuario.tentativas_2fa)
+                return response
 
             else:
 
