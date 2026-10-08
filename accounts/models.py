@@ -1,3 +1,5 @@
+import hashlib
+
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
@@ -53,10 +55,22 @@ class AuditLog(models.Model):
         null=True,
         blank=True
     )
-
     resultado = models.CharField(max_length=100)
-
     detalhes = models.TextField()
+
+    # Hash para garantir a integridade dos dados
+    hash_anterior = models.CharField(                                                                                                                   
+        max_length=64,                                                                                                                                                                   
+        editable=False,                                                                                                                                                                  
+        default='0' * 64,                                                                                                                                                                
+        help_text="Hash do registro anterior, formando a cadeia."                                                                                                                        
+    )
+
+    hash_integridade = models.CharField(                                                                                                                                                 
+        max_length=64,                                                                                                                                                                   
+        editable=False,                                                                                                                                                                  
+        help_text="Hash de integridade que inclui o hash_anterior."                                                                                                                      
+    )                                                               
 
     def __str__(self):
         usuario = self.usuario.username if self.usuario else 'Sistema'
@@ -68,15 +82,23 @@ class AuditLog(models.Model):
             # Impede alterar um log que já existe.
             if AuditLog.objects.filter(pk=self.pk).exists():
                 raise ValueError(
-                 
+                 "Alteração nao permitida"
                 )
 
-        super().save(*args, **kwargs)
+        ultimo = AuditLog.objects.order_by('-id').first()                                                                                                                                
+        self.hash_anterior = ultimo.hash_integridade if ultimo else '0' * 64                                                                                                             
+                                                                                                                                                                                        
+        #conteudo que sera hasheado                                                                                                                                              
+        conteudo = f"{self.evento}{self.data_hora}{self.resultado}{self.hash_anterior}"                                                                                                  
+        self.hash_integridade = hashlib.sha256(conteudo.encode()).hexdigest()                                                                                                            
+                                                                                                                   
+                                                                                                                                                                                        
+        super().save(*args, **kwargs)          
 
     def delete(self, *args, **kwargs):
         # Impede excluir logs de auditoria.
         raise ValueError(
-        
+        "Exclusão não permitida"
         )
 
 
