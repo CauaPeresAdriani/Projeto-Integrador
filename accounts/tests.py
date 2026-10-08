@@ -371,7 +371,7 @@ class PasswordRecoveryTests(ClinSecureBaseTest):
         )
 
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response["Location"])
+        self.assertTrue(response["Location"])
         mock_post.assert_called_once()
         self.assertTrue(
             AuditLog.objects.filter(
