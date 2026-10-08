@@ -1090,11 +1090,7 @@ def recuperacao_view(request):
                     'Tente novamente mais tarde.'
                 )
 
-                return render(
-                    request,
-                    'accounts/recuperacao.html',
-                    {'erro': erro}
-                )
+                return redirect('password_reset')
 
             
             
@@ -1102,11 +1098,7 @@ def recuperacao_view(request):
             'Se existir uma conta com este e-mail ou username, '
             'um link de recuperação será enviado para o e-mail cadastrado. '
         )
-    return render(
-        request,
-        'accounts/recuperacao.html',
-        {'erro': erro}
-    )
+    return redirect('password_reset')
 
 
 
