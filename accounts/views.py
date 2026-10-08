@@ -1096,10 +1096,12 @@ def recuperacao_view(request):
                     {'erro': erro}
                 )
 
-            # Redireciona para a tela de sucesso
-            # Evita enumeração de usuários
-            return redirect('password_reset_done')
-
+            
+            
+    erro = (
+            'Se existir uma conta com este e-mail ou username, '
+            'um link de recuperação será enviado para o e-mail cadastrado. '
+        )
     return render(
         request,
         'accounts/recuperacao.html',

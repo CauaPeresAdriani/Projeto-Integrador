@@ -96,6 +96,3 @@ Implementação de um mecanismo de integridade em `AuditLog` que cria uma cadeia
 - **Compatibilidade com migrações:** Campo `hash_anterior` tem default; `hash_integridade` recebe valor na primeira gravação, permitindo migração sem impactos.
 - **Sem alterações de API:** As chamadas existentes `AuditLog.objects.create(...)` continuam funcionando sem mudanças.
 
-## 6. Referências
-- Commit que introduz a mudança: **[a definir após o commit]**
-- Documentação de auditoria pré‑existente: `docs/Documentação_fix_CIA.md`
