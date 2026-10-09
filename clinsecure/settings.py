@@ -126,32 +126,33 @@ PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
 ]
 
+
 AUTH_USER_MODEL = 'accounts.Usuario'
-if not DEBUG:
-# Tempo máximo da sessão: 15 minutos.
-    SESSION_COOKIE_AGE = 900
 
-    # Atualiza o tempo da sessão a cada requisição.
-    SESSION_SAVE_EVERY_REQUEST = True
+# Segurança de sessão: sempre ativa, em qualquer ambiente
+SESSION_COOKIE_AGE = 900
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
 
-    # Mantém a sessão válida enquanto o navegador estiver aberto.
-    SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+# Configurações de HTTPS e cookies seguros
+SECURE_SSL_REDIRECT = (
+    os.getenv('SECURE_SSL_REDIRECT', 'True') == 'True'
+    if not DEBUG else False
+)
 
-    # Impede JavaScript de acessar o cookie da sessão.
-    SESSION_COOKIE_HTTPONLY = True
-
-    # Ajuda a proteger o cookie da sessão contra ataques CSRF.
-    SESSION_COOKIE_SAMESITE = 'Lax'
-
-# Segurança HTTPS / TLS
-
-    SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'True') == 'True'
+if DEBUG:
+    # Desenvolvimento local usando HTTP
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+else:
+    # Produção usando HTTPS
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-# Cookies só podem ser enviados através de HTTPS.
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
