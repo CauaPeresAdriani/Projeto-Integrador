@@ -40,3 +40,7 @@ return response
 1. **Performance da Aplicação:** As threads da aplicação agora respondem rapidamente e são imediatamente liberadas para atender outros usuários, aumentando o throughput.
 2. **Padrões da Web (HTTP):** A utilização do status `HTTP 429 (Too Many Requests)` e a inclusão do header `Retry-After` seguem rigorosamente as boas práticas de APIs e desenvolvimento web.
 3. **Escalabilidade & Segurança:** A aplicação agora possui defesas mais eficientes contra sobrecarga por bots ou usuários sem penalizar o servidor, protegendo melhor os endpoints contra exaustão de recursos.
+
+## 5. Validação
+
+A implementação do rate‑limiting foi revisada manualmente, porém **não há evidência documentada de testes automatizados** (por exemplo, execução de `manage.py test` ou testes de integração) que confirmem o comportamento esperado em todos os cenários. Essa validação permanece pendente e deverá ser realizada para garantir que o controle de taxa funciona corretamente e não introduz regressões.

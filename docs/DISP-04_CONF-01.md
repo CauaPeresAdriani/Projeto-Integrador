@@ -65,8 +65,11 @@ O acesso à cópia de backup deve ser restrito às pessoas autorizadas a
 administrar o ambiente do ClinSecure.
 A chave não deve ser exposta em logs, screenshots, documentação,
 commits ou respostas de ferramentas de diagnóstico.
-Relação com a Ação 4
-Esta documentação implementa a solução de curto prazo definida para os
-riscos CONF-01 e DISP-04:
-Gerar backup seguro da FIELD_ENCRYPTION_KEY em cofre separado e
-documentar o procedimento de restauração.
+**Relação com a Ação 4**
+Esta documentação aborda a solução de curto prazo para o risco **DISP‑04** (backup da `FIELD_ENCRYPTION_KEY`).
+
+**Backup vs. rotação**
+- O procedimento descrito cobre **apenas o backup e a restauração** da chave existente.
+- **Rotação** da `FIELD_ENCRYPTION_KEY` (exigida pelo risco **CONF‑01**) **não** está implementada e permanece pendente.
+- Por isso, o risco CONF‑01 não está totalmente resolvido; apenas se mitigou a indisponibilidade causada pela perda da chave.
+

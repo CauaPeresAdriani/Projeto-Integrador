@@ -120,3 +120,8 @@ Correção da vulnerabilidade de **enumeração de usuários** na rota de recupe
 - **Auditoria:** mantém registro completo das tentativas, inclusive quando o usuário não existe ou o envio falha, sem expor detalhes sensíveis.
 - **Experiência do usuário:** a mensagem genérica já era exibida anteriormente em caso de falha; agora ela também cobre o caso de usuário inexistente, mantendo consistência.
 - **Código limpo:** a rota `password_reset_done` e seu template foram removidos (não utilizados), simplificando o roteamento.
+
+## 6. Validação
+
+Embora o fluxo tenha sido revisado e o código alterado, **não há registro de testes automatizados** que confirmem a exibição da mensagem genérica em todos os cenários (usuário existente, inexistente ou falha no envio de e‑mail). A execução de testes de integração ou unitários permanece pendente para validar plenamente a mitigação.
+
