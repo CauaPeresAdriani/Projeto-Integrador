@@ -55,7 +55,13 @@ from .permissions import (
     usuario_pode_acessar_pesquisa,
 )
 
-MAX_PDF_SIZE = 10 * 1024 * 1024  # 10 MB
+MAX_PDF_SIZE = 10 * 1024 * 1024  
+MAX_NOME_PESQUISA = 150        
+MAX_DESCRICAO_PESQUISA = 2000
+MAX_TIPO_DADO = 100            
+MAX_RESULTADO_DADO = 5000
+MAX_NOME_PARTICIPANTE = 150
+MAX_EMAIL = 254
 
 def chave_ip_cliente(group, request):
  
@@ -347,6 +353,20 @@ def cadastro_participante_view(request):
         if not nome or not email or not data_nascimento or not cpf or not pesquisa_id:
 
             erro = "Preencha todos os campos obrigatórios."
+
+            return render(
+                request,
+                'accounts/cadastro_participante.html',
+                {
+                    'erro': erro,
+                    'pesquisas': pesquisas
+                }
+            )
+
+        # Limites de tamanho
+        if len(nome) > MAX_NOME_PARTICIPANTE or len(email) > MAX_EMAIL:
+
+            erro = "Nome ou e-mail excede o tamanho máximo permitido."
 
             return render(
                 request,
@@ -1832,6 +1852,18 @@ def criar_pesquisa_view(request):
         if not nome:
             erro = "O nome da pesquisa é obrigatório."
 
+        elif len(nome) > MAX_NOME_PESQUISA:
+            erro = (
+                f"O nome da pesquisa deve ter no máximo "
+                f"{MAX_NOME_PESQUISA} caracteres."
+            )
+
+        elif len(descricao) > MAX_DESCRICAO_PESQUISA:
+            erro = (
+                f"A descrição deve ter no máximo "
+                f"{MAX_DESCRICAO_PESQUISA} caracteres."
+            )
+
         elif status not in [
             "planejamento",
             "ativa",
@@ -2035,6 +2067,18 @@ def editar_pesquisa_view(request, pesquisa_id):
         if not nome:
             erro = "O nome da pesquisa é obrigatório."
 
+        elif len(nome) > MAX_NOME_PESQUISA:
+            erro = (
+                f"O nome da pesquisa deve ter no máximo "
+                f"{MAX_NOME_PESQUISA} caracteres."
+            )
+
+        elif len(descricao) > MAX_DESCRICAO_PESQUISA:
+            erro = (
+                f"A descrição deve ter no máximo "
+                f"{MAX_DESCRICAO_PESQUISA} caracteres."
+            )
+
         # Verifica o status.
         elif status not in [
             "planejamento",
@@ -2170,6 +2214,18 @@ def cadastrar_dado_pesquisa_view(request, participacao_id):
 
         if not tipo or not resultado:
             erro = "Preencha o tipo e o resultado."
+
+        elif len(tipo) > MAX_TIPO_DADO:
+            erro = (
+                f"O tipo deve ter no máximo "
+                f"{MAX_TIPO_DADO} caracteres."
+            )
+
+        elif len(resultado) > MAX_RESULTADO_DADO:
+            erro = (
+                f"O resultado deve ter no máximo "
+                f"{MAX_RESULTADO_DADO} caracteres."
+            )
 
         else:
 

@@ -178,6 +178,8 @@ USE_TZ = True
 FIELD_ENCRYPTION_KEY = os.getenv('FIELD_ENCRYPTION_KEY')
 CPF_HASH_KEY = os.getenv('CPF_HASH_KEY')
 
+DATA_UPLOAD_MAX_MEMORY_SIZE = 1 * 1024 * 1024  # 1 MB
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
