@@ -22,7 +22,6 @@ class Usuario(AbstractUser):
 
     # 2FA
     dois_fatores_ativado = models.BooleanField(default=False)
-    secret_key = models.CharField(max_length=32, blank=True, null=True)
 
     # Proteção contra brute force
     tentativas_login = models.PositiveIntegerField(default=0)
