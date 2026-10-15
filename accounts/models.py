@@ -112,6 +112,14 @@ class Participante(models.Model):
 
     cpf_encrypted = models.TextField()
 
+    cpf_hash = models.CharField(
+        max_length=64,
+        unique=True,
+        null=True,
+        blank=True,
+        editable=False,
+    )
+
     data_nascimento_encrypted = models.TextField()
 
     ativo = models.BooleanField(default=True)

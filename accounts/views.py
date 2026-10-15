@@ -33,6 +33,7 @@ from .crypto import (
     decrypt_file,
     encrypt_data,
     encrypt_file,
+    gerar_hash_cpf,
 )
 
 from .models import (
@@ -418,6 +419,33 @@ def cadastro_participante_view(request):
                 }
             )
 
+                # Verifica CPF duplicado (INTEG-05) por hash, sem expor o CPF
+        cpf_hash = gerar_hash_cpf(cpf)
+
+        if Participante.objects.filter(cpf_hash=cpf_hash).exists():
+
+            AuditLog.objects.create(
+                usuario=request.user,
+                evento="Cadastro de participante",
+                ip=request.META.get("REMOTE_ADDR"),
+                resultado="Falha",
+                detalhes="Tentativa de cadastro com CPF já existente."
+            )
+
+            erro = (
+                "Não foi possível concluir o cadastro. "
+                "Verifique os dados informados."
+            )
+
+            return render(
+                request,
+                'accounts/cadastro_participante.html',
+                {
+                    'erro': erro,
+                    'pesquisas': pesquisas
+                }
+            )
+
         # Validação da data
         try:
 
@@ -497,6 +525,7 @@ def cadastro_participante_view(request):
             registro_participante='TEMP',
             nome_encrypted=encrypt_data(nome),
             cpf_encrypted=encrypt_data(cpf),
+            cpf_hash=cpf_hash,
             data_nascimento_encrypted=encrypt_data(
                 data_nascimento
             ),
@@ -2603,8 +2632,21 @@ def excluir_dados_view(request):
         "DADO_REMOVIDO"
     )
     participante.cpf_encrypted = encrypt_data(
-        "DADO_REMOVIDO"
+        "DADO_REMOVIDO" 
     )
+
+    participante.cpf_hash = None
+    participante.ativo = False
+    participante.save(
+        update_fields=[
+            "nome_encrypted",
+            "cpf_encrypted",
+            "data_nascimento_encrypted",
+            "cpf_hash",
+            "ativo",
+        ]
+    )
+
     participante.data_nascimento_encrypted = encrypt_data(
         "DADO_REMOVIDO"
     )

@@ -176,6 +176,7 @@ USE_TZ = True
 
 
 FIELD_ENCRYPTION_KEY = os.getenv('FIELD_ENCRYPTION_KEY')
+CPF_HASH_KEY = os.getenv('CPF_HASH_KEY')
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/

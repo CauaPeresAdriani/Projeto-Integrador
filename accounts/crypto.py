@@ -1,3 +1,6 @@
+import hashlib
+import hmac
+from django.core.exceptions import ImproperlyConfigured
 from cryptography.fernet import Fernet
 from django.conf import settings
 
@@ -64,3 +67,16 @@ def decrypt_file(file):
     conteudo_descriptografado = fernet.decrypt(conteudo)
 
     return BytesIO(conteudo_descriptografado)
+
+def gerar_hash_cpf(cpf):
+
+    chave = getattr(settings, "CPF_HASH_KEY", None)
+
+    if not chave:
+        raise ImproperlyConfigured("CPF_HASH_KEY não configurada.")
+
+    return hmac.new(
+        chave.encode("utf-8"),
+        cpf.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
