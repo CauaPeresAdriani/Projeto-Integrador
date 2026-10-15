@@ -25,6 +25,7 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django_ratelimit.decorators import ratelimit
 from django.http import HttpResponse
+from django.db import transaction
 
 from django_otp.plugins.otp_totp.models import TOTPDevice
 
@@ -552,26 +553,29 @@ def cadastro_participante_view(request):
         usuario.set_unusable_password()
         usuario.save()
 
-        # Cria participante
-        participante = Participante.objects.create(
-            registro_participante='TEMP',
-            nome_encrypted=encrypt_data(nome),
-            cpf_encrypted=encrypt_data(cpf),
-            cpf_hash=cpf_hash,
-            data_nascimento_encrypted=encrypt_data(
-                data_nascimento
-            ),
-            ativo=True,
-            usuario=usuario
-        )
+        # Cria participante de forma atômica: se algo falhar entre o
+        # create e o save, nada fica gravado (evita registro "TEMP" órfão).
+        with transaction.atomic():
 
-        participante.registro_participante = (
-            f"PT-{participante.id:06d}"
-        )
+            participante = Participante.objects.create(
+                registro_participante='TEMP',
+                nome_encrypted=encrypt_data(nome),
+                cpf_encrypted=encrypt_data(cpf),
+                cpf_hash=cpf_hash,
+                data_nascimento_encrypted=encrypt_data(
+                    data_nascimento
+                ),
+                ativo=True,
+                usuario=usuario
+            )
 
-        participante.save(
-            update_fields=['registro_participante']
-        )
+            participante.registro_participante = (
+                f"PT-{participante.id:06d}"
+            )
+
+            participante.save(
+                update_fields=['registro_participante']
+            )
 
         # Vincula participante à pesquisa
         ParticipacaoPesquisa.objects.create(
@@ -2807,9 +2811,11 @@ def analise_logs_view(request):
         contexto
     )
 
-    class SecurityHeadersMiddleware:
 
-        CSP_DIRETIVAS = [
+class SecurityHeadersMiddleware:
+
+
+    CSP_DIRETIVAS = [
         "default-src 'self'",
         "script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'",
         "style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'",
@@ -2833,6 +2839,7 @@ def analise_logs_view(request):
     def __call__(self, request):
         response = self.get_response(request)
 
+        # Fase 1: somente relatório (não bloqueia nada).
         response.headers.setdefault(
             "Content-Security-Policy-Report-Only", self.csp
         )
