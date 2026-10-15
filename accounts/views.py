@@ -56,8 +56,20 @@ from .permissions import (
 )
 
 MAX_PDF_SIZE = 10 * 1024 * 1024  # 10 MB
-## LOGICA DE LOGIN ##
 
+def chave_ip_cliente(group, request):
+ 
+    encaminhado = request.META.get('HTTP_X_FORWARDED_FOR', '')
+
+    if encaminhado:
+        ip = encaminhado.split(',')[-1].strip()
+        if ip:
+            return ip
+
+    return request.META.get('REMOTE_ADDR', '')
+
+## LOGICA DE LOGIN ##
+@ratelimit(key=chave_ip_cliente, rate='10/m', method='POST', block=True)
 def meu_login_view(request):
 
     erro = None
@@ -677,7 +689,7 @@ def cadastro_participante_view(request):
             'pesquisas': pesquisas
         }
     )
-
+@ratelimit(key=chave_ip_cliente, rate='10/m', method='POST', block=True)
 def ativar_participante_view(request, uidb64, token):
 
     from django.utils.http import urlsafe_base64_decode
@@ -823,6 +835,7 @@ def meu_setup_2fa_view(request):
             
     return render(request, 'accounts/setup_2fa.html', {'imagem_qr_code': imagem_qr_code, 'erro': erro})
 
+@ratelimit(key=chave_ip_cliente, rate='10/m', method='POST', block=True)
 def verificar_2fa_view(request):
 
     # Pega o ID do usuário que está fazendo login.
@@ -1020,6 +1033,7 @@ def meu_logout_view(request):
     return redirect('login')
 
 ## LOGICA DE RECUPERAÇÃO DE SENHA ##
+@ratelimit(key=chave_ip_cliente, rate='5/m', method='POST', block=True)
 def recuperacao_view(request):
     erro = None
 
@@ -1130,7 +1144,7 @@ def recuperacao_view(request):
     return redirect('password_reset')
 
 
-
+@ratelimit(key=chave_ip_cliente, rate='10/m', method='POST', block=True)
 def confirmar_recuperacao_senha_view(request, uidb64, token):
 
     # Importa função para decodificar o UID
