@@ -2694,3 +2694,37 @@ def analise_logs_view(request):
         'accounts/analise_logs.html',
         contexto
     )
+
+    class SecurityHeadersMiddleware:
+
+        CSP_DIRETIVAS = [
+        "default-src 'self'",
+        "script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'",
+        "style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'",
+        "font-src 'self' https://cdn.jsdelivr.net",
+        "img-src 'self' data:",
+        "connect-src 'self'",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+        "frame-ancestors 'none'",
+    ]
+
+    PERMISSIONS_POLICY = (
+        "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+    )
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+        self.csp = "; ".join(self.CSP_DIRETIVAS)
+
+    def __call__(self, request):
+        response = self.get_response(request)
+
+        response.headers.setdefault(
+            "Content-Security-Policy-Report-Only", self.csp
+        )
+        response.headers.setdefault(
+            "Permissions-Policy", self.PERMISSIONS_POLICY
+        )
+        return response
