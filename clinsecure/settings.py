@@ -141,7 +141,7 @@ SESSION_COOKIE_SAMESITE = 'Lax'
 
 # Configurações de HTTPS e cookies seguros
 # Sempre habilita redirecionamento HTTPS quando a variável de ambiente SECURE_SSL_REDIRECT estiver definida como True (padrão).
-SECURE_SSL_REDIRECT = (os.getenv("SECURE_SSL_REDIRECT", "True") == "True")
+SECURE_SSL_REDIRECT = (os.getenv("SECURE_SSL_REDIRECT", "False") == "True")
 SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
