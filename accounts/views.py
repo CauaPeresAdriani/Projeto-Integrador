@@ -23,6 +23,9 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
+from django_ratelimit.decorators import ratelimit
+from django.http import HttpResponse
+from django.db import transaction
 
 from django_otp.plugins.otp_totp.models import TOTPDevice
 
@@ -31,6 +34,7 @@ from .crypto import (
     decrypt_file,
     encrypt_data,
     encrypt_file,
+    gerar_hash_cpf,
 )
 
 from .models import (
@@ -52,9 +56,27 @@ from .permissions import (
     usuario_pode_acessar_pesquisa,
 )
 
-MAX_PDF_SIZE = 10 * 1024 * 1024  # 10 MB
-## LOGICA DE LOGIN ##
+MAX_PDF_SIZE = 10 * 1024 * 1024  
+MAX_NOME_PESQUISA = 150        
+MAX_DESCRICAO_PESQUISA = 2000
+MAX_TIPO_DADO = 100            
+MAX_RESULTADO_DADO = 5000
+MAX_NOME_PARTICIPANTE = 150
+MAX_EMAIL = 254
 
+def chave_ip_cliente(group, request):
+ 
+    encaminhado = request.META.get('HTTP_X_FORWARDED_FOR', '')
+
+    if encaminhado:
+        ip = encaminhado.split(',')[-1].strip()
+        if ip:
+            return ip
+
+    return request.META.get('REMOTE_ADDR', '')
+
+## LOGICA DE LOGIN ##
+@ratelimit(key=chave_ip_cliente, rate='10/m', method='POST', block=True)
 def meu_login_view(request):
 
     erro = None
@@ -186,8 +208,6 @@ def meu_login_view(request):
                 # Cria um atraso conforme o número de tentativas
                 atraso = usuario_cadastrado.tentativas_login
 
-                time.sleep(atraso)
-
                 # Bloqueia após 5 tentativas
                 if usuario_cadastrado.tentativas_login >= 5:
 
@@ -212,6 +232,12 @@ def meu_login_view(request):
                             'de login incorretas.'
                         )
                     )
+
+                    usuario_cadastrado.save()
+
+                    response = HttpResponse("Muitas tentativas.", status=429)
+                    response['Retry-After'] = str(usuario_cadastrado.tentativas_login)
+                    return response
 
                 else:
 
@@ -295,6 +321,7 @@ def cadastro_view(request):
     return render(request, 'accounts/cadastro.html', {'erro': erro})
 
 @login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def cadastro_participante_view(request):
 
     if request.user.perfil != "responsavel":
@@ -327,6 +354,20 @@ def cadastro_participante_view(request):
         if not nome or not email or not data_nascimento or not cpf or not pesquisa_id:
 
             erro = "Preencha todos os campos obrigatórios."
+
+            return render(
+                request,
+                'accounts/cadastro_participante.html',
+                {
+                    'erro': erro,
+                    'pesquisas': pesquisas
+                }
+            )
+
+        # Limites de tamanho
+        if len(nome) > MAX_NOME_PARTICIPANTE or len(email) > MAX_EMAIL:
+
+            erro = "Nome ou e-mail excede o tamanho máximo permitido."
 
             return render(
                 request,
@@ -411,6 +452,33 @@ def cadastro_participante_view(request):
                 }
             )
 
+                # Verifica CPF duplicado (INTEG-05) por hash, sem expor o CPF
+        cpf_hash = gerar_hash_cpf(cpf)
+
+        if Participante.objects.filter(cpf_hash=cpf_hash).exists():
+
+            AuditLog.objects.create(
+                usuario=request.user,
+                evento="Cadastro de participante",
+                ip=request.META.get("REMOTE_ADDR"),
+                resultado="Falha",
+                detalhes="Tentativa de cadastro com CPF já existente."
+            )
+
+            erro = (
+                "Não foi possível concluir o cadastro. "
+                "Verifique os dados informados."
+            )
+
+            return render(
+                request,
+                'accounts/cadastro_participante.html',
+                {
+                    'erro': erro,
+                    'pesquisas': pesquisas
+                }
+            )
+
         # Validação da data
         try:
 
@@ -485,25 +553,29 @@ def cadastro_participante_view(request):
         usuario.set_unusable_password()
         usuario.save()
 
-        # Cria participante
-        participante = Participante.objects.create(
-            registro_participante='TEMP',
-            nome_encrypted=encrypt_data(nome),
-            cpf_encrypted=encrypt_data(cpf),
-            data_nascimento_encrypted=encrypt_data(
-                data_nascimento
-            ),
-            ativo=True,
-            usuario=usuario
-        )
+        # Cria participante de forma atômica: se algo falhar entre o
+        # create e o save, nada fica gravado (evita registro "TEMP" órfão).
+        with transaction.atomic():
 
-        participante.registro_participante = (
-            f"PT-{participante.id:06d}"
-        )
+            participante = Participante.objects.create(
+                registro_participante='TEMP',
+                nome_encrypted=encrypt_data(nome),
+                cpf_encrypted=encrypt_data(cpf),
+                cpf_hash=cpf_hash,
+                data_nascimento_encrypted=encrypt_data(
+                    data_nascimento
+                ),
+                ativo=True,
+                usuario=usuario
+            )
 
-        participante.save(
-            update_fields=['registro_participante']
-        )
+            participante.registro_participante = (
+                f"PT-{participante.id:06d}"
+            )
+
+            participante.save(
+                update_fields=['registro_participante']
+            )
 
         # Vincula participante à pesquisa
         ParticipacaoPesquisa.objects.create(
@@ -641,7 +713,7 @@ def cadastro_participante_view(request):
             'pesquisas': pesquisas
         }
     )
-
+@ratelimit(key=chave_ip_cliente, rate='10/m', method='POST', block=True)
 def ativar_participante_view(request, uidb64, token):
 
     from django.utils.http import urlsafe_base64_decode
@@ -787,6 +859,7 @@ def meu_setup_2fa_view(request):
             
     return render(request, 'accounts/setup_2fa.html', {'imagem_qr_code': imagem_qr_code, 'erro': erro})
 
+@ratelimit(key=chave_ip_cliente, rate='10/m', method='POST', block=True)
 def verificar_2fa_view(request):
 
     # Pega o ID do usuário que está fazendo login.
@@ -887,7 +960,6 @@ def verificar_2fa_view(request):
 
             # Cria atraso progressivo.
             atraso = usuario.tentativas_2fa
-            time.sleep(atraso)
 
             # Bloqueia após 5 tentativas.
             if usuario.tentativas_2fa >= 5:
@@ -902,12 +974,18 @@ def verificar_2fa_view(request):
 
                 # Registra o bloqueio do 2FA.
                 AuditLog.objects.create(
-                usuario=usuario,
-                evento='Bloqueio 2FA',
-                ip=request.META.get('REMOTE_ADDR'),
-                resultado='Bloqueado',
-                detalhes='2FA bloqueado após 5 tentativas incorretas.'
+                    usuario=usuario,
+                    evento='Bloqueio 2FA',
+                    ip=request.META.get('REMOTE_ADDR'),
+                    resultado='Bloqueado',
+                    detalhes='2FA bloqueado após 5 tentativas incorretas.'
                 )
+
+                usuario.save()
+
+                response = HttpResponse("Muitas tentativas.", status=429)
+                response['Retry-After'] = str(usuario.tentativas_2fa)
+                return response
 
             else:
 
@@ -929,6 +1007,7 @@ def verificar_2fa_view(request):
 
 
 @login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def home_view(request):
     context = {}
     usuario = request.user
@@ -978,6 +1057,7 @@ def meu_logout_view(request):
     return redirect('login')
 
 ## LOGICA DE RECUPERAÇÃO DE SENHA ##
+@ratelimit(key=chave_ip_cliente, rate='5/m', method='POST', block=True)
 def recuperacao_view(request):
     erro = None
 
@@ -1077,24 +1157,18 @@ def recuperacao_view(request):
                     'Tente novamente mais tarde.'
                 )
 
-                return render(
-                    request,
-                    'accounts/recuperacao.html',
-                    {'erro': erro}
-                )
+                return redirect('password_reset')
 
-            # Redireciona para a tela de sucesso
-            # Evita enumeração de usuários
-            return redirect('password_reset_done')
-
-    return render(
-        request,
-        'accounts/recuperacao.html',
-        {'erro': erro}
-    )
+            
+            
+    erro = (
+            'Se existir uma conta com este e-mail ou username, '
+            'um link de recuperação será enviado para o e-mail cadastrado. '
+        )
+    return redirect('password_reset')
 
 
-
+@ratelimit(key=chave_ip_cliente, rate='10/m', method='POST', block=True)
 def confirmar_recuperacao_senha_view(request, uidb64, token):
 
     # Importa função para decodificar o UID
@@ -1224,6 +1298,7 @@ def confirmar_recuperacao_senha_view(request, uidb64, token):
 
 
 @login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def upload_documento_view(request):
     if request.user.perfil not in [
         "responsavel",
@@ -1350,6 +1425,7 @@ def upload_documento_view(request):
 
 
 @login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def download_documento_view(request, documento_id):
 
     try:
@@ -1398,6 +1474,7 @@ def download_documento_view(request, documento_id):
         )
 
 @login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def visualizar_documento_view(request, documento_id):
     
     try:
@@ -1447,6 +1524,7 @@ def visualizar_documento_view(request, documento_id):
 
 
 @login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def conceder_acesso_documento_view(request, documento_id):
 
     if request.user.perfil != "coordenador":
@@ -1550,6 +1628,7 @@ def conceder_acesso_documento_view(request, documento_id):
 
 
 @login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def revogar_acesso_documento_view(request, acesso_id):
 
     if request.method != "POST":
@@ -1609,8 +1688,9 @@ def revogar_acesso_documento_view(request, acesso_id):
 
 ## LOGICA DE PESQUISAS ##
 
+
 @login_required
-@login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def lista_pesquisas_view(request):
 
     context = {}
@@ -1674,6 +1754,7 @@ def lista_pesquisas_view(request):
 
 
 @login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def detalhe_pesquisa_view(request, pesquisa_id):
 
     try:
@@ -1774,6 +1855,18 @@ def criar_pesquisa_view(request):
 
         if not nome:
             erro = "O nome da pesquisa é obrigatório."
+
+        elif len(nome) > MAX_NOME_PESQUISA:
+            erro = (
+                f"O nome da pesquisa deve ter no máximo "
+                f"{MAX_NOME_PESQUISA} caracteres."
+            )
+
+        elif len(descricao) > MAX_DESCRICAO_PESQUISA:
+            erro = (
+                f"A descrição deve ter no máximo "
+                f"{MAX_DESCRICAO_PESQUISA} caracteres."
+            )
 
         elif status not in [
             "planejamento",
@@ -1978,6 +2071,18 @@ def editar_pesquisa_view(request, pesquisa_id):
         if not nome:
             erro = "O nome da pesquisa é obrigatório."
 
+        elif len(nome) > MAX_NOME_PESQUISA:
+            erro = (
+                f"O nome da pesquisa deve ter no máximo "
+                f"{MAX_NOME_PESQUISA} caracteres."
+            )
+
+        elif len(descricao) > MAX_DESCRICAO_PESQUISA:
+            erro = (
+                f"A descrição deve ter no máximo "
+                f"{MAX_DESCRICAO_PESQUISA} caracteres."
+            )
+
         # Verifica o status.
         elif status not in [
             "planejamento",
@@ -2051,6 +2156,7 @@ def editar_pesquisa_view(request, pesquisa_id):
     )
 
 @login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def cadastrar_dado_pesquisa_view(request, participacao_id):
 
     try:
@@ -2113,6 +2219,18 @@ def cadastrar_dado_pesquisa_view(request, participacao_id):
         if not tipo or not resultado:
             erro = "Preencha o tipo e o resultado."
 
+        elif len(tipo) > MAX_TIPO_DADO:
+            erro = (
+                f"O tipo deve ter no máximo "
+                f"{MAX_TIPO_DADO} caracteres."
+            )
+
+        elif len(resultado) > MAX_RESULTADO_DADO:
+            erro = (
+                f"O resultado deve ter no máximo "
+                f"{MAX_RESULTADO_DADO} caracteres."
+            )
+
         else:
 
             DadoPesquisa.objects.create(
@@ -2151,6 +2269,7 @@ def cadastrar_dado_pesquisa_view(request, participacao_id):
     )
 
 @login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def detalhe_participante_view(request, participante_id):
 
     try:
@@ -2303,6 +2422,7 @@ VERSAO_CONSENTIMENTO = "1.0"
 
 
 @login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def meus_dados_view(request):
     if request.user.perfil != "participante":
         return HttpResponse("Acesso negado.", status=403)
@@ -2352,6 +2472,7 @@ def meus_dados_view(request):
 
 
 @login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def consentir_dados_view(request):
     if request.user.perfil != "participante":
         return HttpResponse("Acesso negado.", status=403)
@@ -2409,6 +2530,7 @@ def consentir_dados_view(request):
 
 
 @login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def revogar_consentimento_view(request, consentimento_id):
     if request.user.perfil != "participante":
         return HttpResponse("Acesso negado.", status=403)
@@ -2452,6 +2574,7 @@ def revogar_consentimento_view(request, consentimento_id):
 
 
 @login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def exportar_dados_view(request):
     if request.user.perfil != "participante":
         return HttpResponse("Acesso negado.", status=403)
@@ -2561,6 +2684,7 @@ def exportar_dados_view(request):
 
 
 @login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def excluir_dados_view(request):
     if request.user.perfil != "participante":
         return HttpResponse("Acesso negado.", status=403)
@@ -2582,8 +2706,21 @@ def excluir_dados_view(request):
         "DADO_REMOVIDO"
     )
     participante.cpf_encrypted = encrypt_data(
-        "DADO_REMOVIDO"
+        "DADO_REMOVIDO" 
     )
+
+    participante.cpf_hash = None
+    participante.ativo = False
+    participante.save(
+        update_fields=[
+            "nome_encrypted",
+            "cpf_encrypted",
+            "data_nascimento_encrypted",
+            "cpf_hash",
+            "ativo",
+        ]
+    )
+
     participante.data_nascimento_encrypted = encrypt_data(
         "DADO_REMOVIDO"
     )
@@ -2633,6 +2770,7 @@ def excluir_dados_view(request):
     return redirect("login")
 
 @login_required
+@ratelimit(key='ip', rate='10/m', method="POST" ,block=True)
 def analise_logs_view(request):
     # Somente administrador e coordenador podem analisar os logs.
     if request.user.perfil not in ['administrador', 'coordenador']:
@@ -2672,3 +2810,44 @@ def analise_logs_view(request):
         'accounts/analise_logs.html',
         contexto
     )
+
+
+class SecurityHeadersMiddleware:
+
+
+    CSP_DIRETIVAS = [
+        "default-src 'self'",
+        "script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'",
+        "style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'",
+        "font-src 'self' https://cdn.jsdelivr.net",
+        "img-src 'self' data:",
+        "connect-src 'self'",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+        "frame-ancestors 'none'",
+    ]
+
+    PERMISSIONS_POLICY = (
+        "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+    )
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+        self.csp = "; ".join(self.CSP_DIRETIVAS)
+
+    def __call__(self, request):
+        response = self.get_response(request)
+
+        # Fase 1: somente relatório (não bloqueia nada).
+        response.headers.setdefault(
+            "Content-Security-Policy-Report-Only", self.csp
+        )
+        response.headers.setdefault(
+            "Permissions-Policy", self.PERMISSIONS_POLICY
+        )
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("Referrer-Policy", "no-referrer")
+        response.headers.setdefault("X-Frame-Options", "DENY")
+        response.headers.setdefault("X-XSS-Protection", "1; mode=block")
+        return response

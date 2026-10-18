@@ -26,15 +26,6 @@ urlpatterns = [
         recuperacao_view,
         name='password_reset'
     ),
-
-    path(
-        'recuperar-senha/enviado/',
-        auth_views.PasswordResetDoneView.as_view(
-            template_name='accounts/password_reset_done.html'
-        ),
-        name='password_reset_done'
-    ),
-
     path(
         'recuperar-senha/<uidb64>/<token>/',
         confirmar_recuperacao_senha_view,

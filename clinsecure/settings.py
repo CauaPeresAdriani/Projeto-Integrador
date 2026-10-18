@@ -61,6 +61,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django_otp.middleware.OTPMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+    'accounts.views.SecurityHeadersMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'clinsecure.urls'
@@ -126,35 +129,25 @@ PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
 ]
 
+
 AUTH_USER_MODEL = 'accounts.Usuario'
-if not DEBUG:
-# Tempo máximo da sessão: 15 minutos.
-    SESSION_COOKIE_AGE = 900
 
-    # Atualiza o tempo da sessão a cada requisição.
-    SESSION_SAVE_EVERY_REQUEST = True
+# Segurança de sessão: sempre ativa, em qualquer ambiente
+SESSION_COOKIE_AGE = 900
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
 
-    # Mantém a sessão válida enquanto o navegador estiver aberto.
-    SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-
-    # Impede JavaScript de acessar o cookie da sessão.
-    SESSION_COOKIE_HTTPONLY = True
-
-    # Ajuda a proteger o cookie da sessão contra ataques CSRF.
-    SESSION_COOKIE_SAMESITE = 'Lax'
-
-# Segurança HTTPS / TLS
-
-    SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'True') == 'True'
-    SECURE_HSTS_SECONDS = 31536000
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
-# Cookies só podem ser enviados através de HTTPS.
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-
+# Configurações de HTTPS e cookies seguros
+# Sempre habilita redirecionamento HTTPS quando a variável de ambiente SECURE_SSL_REDIRECT estiver definida como True (padrão).
+SECURE_SSL_REDIRECT = (os.getenv("SECURE_SSL_REDIRECT", "False") == "True")
+SECURE_HSTS_SECONDS = 31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
 CSRF_TRUSTED_ORIGINS = [
     'https://projeto-integrador-production-2d81.up.railway.app',
 ]
@@ -172,6 +165,9 @@ USE_TZ = True
 
 
 FIELD_ENCRYPTION_KEY = os.getenv('FIELD_ENCRYPTION_KEY')
+CPF_HASH_KEY = os.getenv('CPF_HASH_KEY')
+
+DATA_UPLOAD_MAX_MEMORY_SIZE = 1 * 1024 * 1024  # 1 MB
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
@@ -193,3 +189,12 @@ import os
 # Expiração do Token em 1 hora
 PASSWORD_RESET_TIMEOUT = 3600
 
+ # Configuração de Cache para Rate Limiting
+    # Para ambiente de produção distribuído (Gunicorn com múltiplos workers):
+CACHES = {
+        'default': {
+            # Opção 1 (Simples, sem infraestrutura externa): Armazena contadores no próprio banco MySQL
+            'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+            'LOCATION': 'clinsecure_cache_table',
+        }
+    }
