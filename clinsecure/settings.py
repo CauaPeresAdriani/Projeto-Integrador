@@ -140,25 +140,14 @@ SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 
 # Configurações de HTTPS e cookies seguros
-SECURE_SSL_REDIRECT = (
-    os.getenv('SECURE_SSL_REDIRECT', 'True') == 'True'
-    if not DEBUG else False
-)
-
-if DEBUG:
-    # Desenvolvimento local usando HTTP
-    SESSION_COOKIE_SECURE = False
-    CSRF_COOKIE_SECURE = False
-else:
-    # Produção usando HTTPS
-    SECURE_HSTS_SECONDS = 31536000
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-
+# Sempre habilita redirecionamento HTTPS quando a variável de ambiente SECURE_SSL_REDIRECT estiver definida como True (padrão).
+SECURE_SSL_REDIRECT = (os.getenv("SECURE_SSL_REDIRECT", "True") == "True")
+SECURE_HSTS_SECONDS = 31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
 CSRF_TRUSTED_ORIGINS = [
     'https://projeto-integrador-production-2d81.up.railway.app',
 ]
