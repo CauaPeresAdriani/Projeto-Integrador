@@ -2721,6 +2721,20 @@ def excluir_dados_view(request):
         ]
     )
 
+    
+
+    participante.cpf_hash = None
+    participante.ativo = False
+    participante.save(
+        update_fields=[
+            "nome_encrypted",
+            "cpf_encrypted",
+            "data_nascimento_encrypted",
+            "cpf_hash",
+            "ativo",
+        ]
+    )
+
     participante.data_nascimento_encrypted = encrypt_data(
         "DADO_REMOVIDO"
     )
@@ -2851,3 +2865,17 @@ class SecurityHeadersMiddleware:
         response.headers.setdefault("X-Frame-Options", "DENY")
         response.headers.setdefault("X-XSS-Protection", "1; mode=block")
         return response
+
+from django.views.csrf import csrf_failure
+
+
+def diagnostico_falha_csrf(request, reason=""):
+    import sys
+
+    print(
+        f"CSRF rejeitado: motivo={reason}; "
+        f"metodo={request.method}; caminho={request.path}",
+        file=sys.stderr,
+        flush=True,
+    )
+    return csrf_failure(request, reason=reason)

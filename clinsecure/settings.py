@@ -197,4 +197,7 @@ CACHES = {
             'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
             'LOCATION': 'clinsecure_cache_table',
         }
-    }
+}
+
+CSRF_FAILURE_VIEW = "accounts.views.diagnostico_falha_csrf"
+    
