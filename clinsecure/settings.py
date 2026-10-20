@@ -200,3 +200,4 @@ CACHES = {
     }
 
 CSRF_FAILURE_VIEW = "accounts.views.diagnostico_falha_csrf"
+    }

@@ -2721,6 +2721,20 @@ def excluir_dados_view(request):
         ]
     )
 
+    )
+
+    participante.cpf_hash = None
+    participante.ativo = False
+    participante.save(
+        update_fields=[
+            "nome_encrypted",
+            "cpf_encrypted",
+            "data_nascimento_encrypted",
+            "cpf_hash",
+            "ativo",
+        ]
+    )
+
     participante.data_nascimento_encrypted = encrypt_data(
         "DADO_REMOVIDO"
     )
