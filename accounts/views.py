@@ -2861,7 +2861,7 @@ class SecurityHeadersMiddleware:
             "Permissions-Policy", self.PERMISSIONS_POLICY
         )
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
-        response.headers.setdefault("Referrer-Policy", "no-referrer")
+        response.headers.setdefault("Referrer-Policy", "same-origin")
         response.headers.setdefault("X-Frame-Options", "DENY")
         response.headers.setdefault("X-XSS-Protection", "1; mode=block")
         return response
