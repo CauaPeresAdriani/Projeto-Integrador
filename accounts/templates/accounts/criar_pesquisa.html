@@ -183,20 +183,20 @@
                                 Status:
                             </label>
 
-                            <select id="status" name="status" required>
-                                <option value="planejamento" {% if status=="planejamento" %}selected{% endif %}>
+                           <select id="status" name="status" required>
+                                <option value="planejamento" {% if status == "planejamento" %}selected{% endif %}>
                                     Planejamento
                                 </option>
 
-                                <option value="ativa" {% if status=="ativa" %}selected{% endif %}>
+                                <option value="ativa" {% if status == "ativa" %}selected{% endif %}>
                                     Ativa
                                 </option>
 
-                                <option value="encerrada" {% if status=="encerrada" %}selected{% endif %}>
+                                <option value="encerrada" {% if status == "encerrada" %}selected{% endif %}>
                                     Encerrada
                                 </option>
 
-                                <option value="cancelada" {% if status=="cancelada" %}selected{% endif %}>
+                                <option value="cancelada" {% if status == "cancelada" %}selected{% endif %}>
                                     Cancelada
                                 </option>
                             </select>
@@ -233,24 +233,15 @@
                             <br>
 
                             <select id="pesquisadores" name="pesquisadores" multiple size="6">
-
                                 {% for pesquisador in pesquisadores %}
-
-                                <option value="{{ pesquisador.id }}" {% if pesquisador.id|stringformat:"s" in
-                                    pesquisadores_selecionados %} selected {% endif %}>
-                                    {{ pesquisador.username }}
-                                    -
-                                    {{ pesquisador.email }}
-                                </option>
-
+                                    <option value="{{ pesquisador.id }}" {% if pesquisador.id|stringformat:"s" in pesquisadores_selecionados %}selected{% endif %}>
+                                        {{ pesquisador.username }} - {{ pesquisador.email }}
+                                    </option>
                                 {% empty %}
-
-                                <option disabled>
-                                    Nenhum pesquisador disponível.
-                                </option>
-
+                                    <option disabled>
+                                        Nenhum pesquisador disponível.
+                                    </option>
                                 {% endfor %}
-
                             </select>
 
                             <p>

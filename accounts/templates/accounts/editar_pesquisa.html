@@ -101,22 +101,21 @@
 
                     <select id="status" name="status" class="form-select" required>
 
-                        <option value="planejamento" {% if pesquisa.status=="planejamento" %}selected{% endif %}>
+                        <option value="planejamento" {% if pesquisa.status == "planejamento" %}selected{% endif %}>
                             Planejamento
                         </option>
 
-                        <option value="ativa" {% if pesquisa.status=="ativa" %}selected{% endif %}>
+                        <option value="ativa" {% if pesquisa.status == "ativa" %}selected{% endif %}>
                             Ativa
                         </option>
 
-                        <option value="encerrada" {% if pesquisa.status=="encerrada" %}selected{% endif %}>
+                        <option value="encerrada" {% if pesquisa.status == "encerrada" %}selected{% endif %}>
                             Encerrada
                         </option>
 
-                        <option value="cancelada" {% if pesquisa.status=="cancelada" %}selected{% endif %}>
+                        <option value="cancelada" {% if pesquisa.status == "cancelada" %}selected{% endif %}>
                             Cancelada
                         </option>
-
                     </select>
 
                 </div>
