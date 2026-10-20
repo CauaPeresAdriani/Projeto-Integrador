@@ -2721,7 +2721,7 @@ def excluir_dados_view(request):
         ]
     )
 
-    )
+    
 
     participante.cpf_hash = None
     participante.ativo = False
