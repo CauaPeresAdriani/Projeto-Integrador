@@ -370,8 +370,12 @@ class PasswordRecoveryTests(ClinSecureBaseTest):
             {"identificador": self.responsavel_a.email},
         )
 
-        self.assertEqual(response.status_code, 302)
-        self.assertTrue(response["Location"])
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "accounts/recuperacao.html")
+        self.assertContains(
+            response,
+            "Se existir uma conta com este e-mail ou username"
+        )
         mock_post.assert_called_once()
         self.assertTrue(
             AuditLog.objects.filter(

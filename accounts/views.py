@@ -1157,15 +1157,26 @@ def recuperacao_view(request):
                     'Tente novamente mais tarde.'
                 )
 
-                return redirect('password_reset')
+                return render(
+                    request,
+                    'accounts/recuperacao.html',
+                    {'erro': erro}
+                )
 
             
             
-    erro = (
+    if request.method == 'POST':
+        erro = (
             'Se existir uma conta com este e-mail ou username, '
-            'um link de recuperação será enviado para o e-mail cadastrado. '
+            'um link de recuperação será enviado para o e-mail cadastrado.'
         )
-    return redirect('password_reset')
+        return render(
+            request,
+            'accounts/recuperacao.html',
+            {'erro': erro}
+        )
+
+    return render(request, 'accounts/recuperacao.html')
 
 
 @ratelimit(key=chave_ip_cliente, rate='10/m', method='POST', block=True)
@@ -1263,7 +1274,7 @@ def confirmar_recuperacao_senha_view(request, uidb64, token):
         except ValidationError as e:
             return render(
                 request,
-                'accounts/ativar_participante.html',
+                'accounts/password_reset_confirm.html',
                 {
                     'validlink': True,
                     'erro': ' '.join(e.messages)
