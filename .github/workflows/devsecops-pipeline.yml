@@ -1,4 +1,5 @@
-name: DevSecOps
+
+name: DevSecOps - ClinSecure
 
 on:
   push:
@@ -9,11 +10,11 @@ permissions:
   contents: read
 
 jobs:
-
   secrets:
-    name: Secrets Scan
+    name: Secrets Scan - TruffleHog
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 15
+
     steps:
       - name: Baixar código
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
@@ -27,8 +28,9 @@ jobs:
           extra_args: --results=verified,unknown
 
   dependencies:
-    name: Dependency Scan
+    name: Dependency Scan - Trivy
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Baixar código
@@ -44,8 +46,9 @@ jobs:
           exit-code: '1'
 
   sast:
-    name: SAST - Análise de código
+    name: SAST - Semgrep
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     container:
       image: semgrep/semgrep
@@ -58,8 +61,9 @@ jobs:
         run: semgrep scan --config auto --error .
 
   tests:
-    name: Testes Django
+    name: Testes Django - MySQL
     runs-on: ubuntu-latest
+    timeout-minutes: 25
 
     services:
       mysql:
@@ -111,3 +115,139 @@ jobs:
       - name: Executar testes Django
         run: |
           python manage.py test accounts --verbosity=2
+
+  dast:
+    name: DAST - OWASP ZAP
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: clinsecure
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      SECRET_KEY: chave-secreta-apenas-para-testes
+      FIELD_ENCRYPTION_KEY: 2Y8j4qR8mJ6vN3xL0pKs7wV5cT1zA9bC2dE4fG6hI8j=
+      DEBUG: "True"
+      DB_NAME: clinsecure
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      ALLOWED_HOSTS: localhost,127.0.0.1
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
+      - name: Configurar Python
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d
+        with:
+          python-version: "3.14"
+          cache: pip
+
+      - name: Instalar dependências do sistema
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            default-libmysqlclient-dev \
+            build-essential \
+            pkg-config
+
+      - name: Instalar dependências Python
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Preparar banco de dados
+        run: python manage.py migrate --noinput
+
+      - name: Iniciar aplicação Django
+        run: |
+          nohup python manage.py runserver 0.0.0.0:8000 \
+            > django-dast.log 2>&1 &
+
+      - name: Aguardar aplicação ficar disponível
+        run: |
+          for i in {1..60}; do
+            echo "Tentativa $i de 60..."
+
+            if curl -fsS http://127.0.0.1:8000/ -o /dev/null; then
+              echo "ClinSecure iniciado com sucesso!"
+              exit 0
+            fi
+
+            sleep 5
+          done
+
+          echo "A aplicação não iniciou."
+          cat django-dast.log
+          exit 1
+
+      - name: Executar OWASP ZAP Full Scan
+        uses: zaproxy/action-full-scan@v0.13.0
+        with:
+          target: http://127.0.0.1:8000
+          fail_action: true
+          cmd_options: "-a -j"
+
+      - name: Registrar log da aplicação em caso de falha
+        if: failure()
+        run: cat django-dast.log
+
+  privacy:
+    name: Privacy Scan - Bearer
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
+      - name: Analisar riscos de segurança e privacidade
+        uses: bearer/bearer-action@v2
+        with:
+          severity: critical,high
+          exit-code: '1'
+
+  sbom:
+    name: Supply Chain Security - SBOM
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
+      - name: Gerar SBOM CycloneDX com Trivy
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: cyclonedx
+          output: sbom.json
+          exit-code: '0'
+
+      - name: Verificar geração do SBOM
+        run: |
+          test -s sbom.json
+          echo "SBOM CycloneDX gerado com sucesso!"
+          head -c 500 sbom.json
+
+      - name: Disponibilizar SBOM como artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: clinsecure-sbom-cyclonedx
+          path: sbom.json
+          if-no-files-found: error
+          retention-days: 30
