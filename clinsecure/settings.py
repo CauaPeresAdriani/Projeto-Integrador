@@ -53,6 +53,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'accounts.views.SecurityHeadersMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -61,9 +62,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django_otp.middleware.OTPMiddleware',
-    'django.middleware.security.SecurityMiddleware',
-    'accounts.views.SecurityHeadersMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'clinsecure.urls'
@@ -138,6 +136,8 @@ SESSION_SAVE_EVERY_REQUEST = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_HTTPONLY = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
 
 # Configurações de HTTPS e cookies seguros
 # Sempre habilita redirecionamento HTTPS quando a variável de ambiente SECURE_SSL_REDIRECT estiver definida como True (padrão).

@@ -1,0 +1,27 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}Erro Interno | ClinSecure{% endblock %}
+
+{% block content %}
+<header class="header">
+    <div class="profile">
+        <img src="{% static 'img/Profile.webp' %}" alt="ClinSecure Logo">
+        <h2>ClinSecure</h2>
+    </div>
+    <nav>
+        <a href="{% url 'home' %}">Início</a>
+        <a href="{% url 'login' %}">Login</a>
+    </nav>
+</header>
+
+<div class="login-container">
+    <div class="card shadow p-4 login-card text-center">
+        <h2 class="login-title mb-3">500 - Erro Interno</h2>
+        <p class="text-muted mb-4">Ocorreu uma instabilidade temporária no processamento de sua solicitação. O evento foi registrado para análise.</p>
+        <div>
+            <a href="{% url 'home' %}" class="btn-submit text-decoration-none d-inline-block">Voltar ao Início</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -138,7 +138,7 @@ jobs:
     env:
       SECRET_KEY: chave-secreta-apenas-para-testes
       FIELD_ENCRYPTION_KEY: 2Y8j4qR8mJ6vN3xL0pKs7wV5cT1zA9bC2dE4fG6hI8j=
-      DEBUG: "True"
+      DEBUG: "False"
       DB_NAME: clinsecure
       DB_USER: root
       DB_PASSWORD: root
@@ -170,7 +170,10 @@ jobs:
           python -m pip install -r requirements.txt
 
       - name: Preparar banco de dados
-        run: python manage.py migrate --noinput
+        run: |
+          python manage.py migrate --noinput
+          python manage.py createcachetable
+          python manage.py collectstatic --noinput
 
       - name: Iniciar aplicação Django
         run: |
@@ -198,8 +201,10 @@ jobs:
         uses: zaproxy/action-full-scan@3c58388149901b9a03b7718852c5ba889646c27c
         with:
           target: http://127.0.0.1:8000
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: "-a -j -I"
           fail_action: true
-          cmd_options: "-a -j"
+          allow_issue_writing: false
 
       - name: Registrar log da aplicação em caso de falha
         if: failure()

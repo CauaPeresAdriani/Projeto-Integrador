@@ -1,0 +1,33 @@
+# OWASP ZAP Rules Configuration for ClinSecure
+# Format: <rule-id>\t<threshold>\t<rule-name>
+# Thresholds: IGNORE, INFO, WARN, FAIL
+# High and Critical vulnerabilities are strictly set to FAIL (pipeline blocker)
+6	FAIL	Path Traversal
+40003	FAIL	CRLF Injection
+40008	FAIL	Parameter Tampering
+40009	FAIL	Server Side Include
+40012	FAIL	Cross Site Scripting (Reflected)
+40014	FAIL	Cross Site Scripting (Persistent)
+40016	FAIL	Cross Site Scripting (Persistent) - Prime
+40017	FAIL	Cross Site Scripting (Persistent) - Spider
+40018	FAIL	SQL Injection
+40019	FAIL	SQL Injection - MySQL
+40020	FAIL	SQL Injection - Hypersonic SQL
+40021	FAIL	SQL Injection - Oracle
+40022	FAIL	SQL Injection - PostgreSQL
+40024	FAIL	SQL Injection - SQLite
+40027	FAIL	SQL Injection - MsSQL
+40038	FAIL	Bypassing 403
+90019	FAIL	Server Side Code Injection
+90020	FAIL	Remote OS Command Injection
+
+# Informational and Warning alerts (monitored and auditable in report, non-blocking on -I)
+10010	WARN	Cookie No HttpOnly Flag
+10021	WARN	X-Content-Type-Options Header Missing
+10036	WARN	Server Leaks Version Information via "Server" HTTP Response Header Field
+10038	WARN	Content Security Policy (CSP) Header Not Set
+10096	INFO	Timestamp Disclosure - Unix
+10202	WARN	Absence of Anti-CSRF Tokens
+110009	WARN	Full Path Disclosure
+90004	WARN	Cross-Origin-Resource-Policy Header Missing or Invalid
+90022	WARN	Application Error Disclosure

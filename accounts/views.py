@@ -2844,7 +2844,7 @@ class SecurityHeadersMiddleware:
         "default-src 'self'",
         "script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'",
         "style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'",
-        "font-src 'self' https://cdn.jsdelivr.net",
+        "font-src 'self' https://cdn.jsdelivr.net data:",
         "img-src 'self' data:",
         "connect-src 'self'",
         "object-src 'none'",
@@ -2864,14 +2864,15 @@ class SecurityHeadersMiddleware:
     def __call__(self, request):
         response = self.get_response(request)
 
-        # Fase 1: somente relatório (não bloqueia nada).
         response.headers.setdefault(
-            "Content-Security-Policy-Report-Only", self.csp
+            "Content-Security-Policy", self.csp
         )
         response.headers.setdefault(
             "Permissions-Policy", self.PERMISSIONS_POLICY
         )
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("Cross-Origin-Resource-Policy", "same-origin")
+        response.headers["Server"] = "ClinSecure"
         response.headers.setdefault("Referrer-Policy", "same-origin")
         response.headers.setdefault("X-Frame-Options", "DENY")
         response.headers.setdefault("X-XSS-Protection", "1; mode=block")
